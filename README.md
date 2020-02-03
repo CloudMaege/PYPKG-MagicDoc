@@ -28,7 +28,7 @@ pip3 install magicdoc
 
 <br>
 
-## MagicDoc Command
+## MagicDoc Commands
 
 ```yaml
 magicdoc:
@@ -57,7 +57,7 @@ magicdoc:
     - show
 ```
 
-<br>
+<br><br>
 
 ## MagicDoc Show Commands
 
@@ -70,7 +70,11 @@ Options:
   --help  Show this message and exit.
 
 Commands:
-  files
+  files      Command that will retrieve a list of files from a target...
+  outputs    Command that will retrieve a list of all of the project outputs...
+  release    Command that will retrieve the project repository information...
+  repo       Command that will retrieve the project repository information...
+  variables  Command that will retrieve a list of all of the project...
 ```
 
 <br>
@@ -82,7 +86,7 @@ magicdoc show files:
   Examples:
     magicdoc show files
     magicdoc -p terraform -d /path/to/module/sourcecode show files
-    magicdoc -p terraform show files /path/to/module/sourcecode show files
+    magicdoc -p terraform show files /path/to/module/sourcecode
   Arguments:
       directory:
           Description: The target directory containing the project source files that will be used as the documentation objective.
@@ -126,7 +130,7 @@ magicdoc show variables:
   Examples:
     magicdoc show variables
     magicdoc -p terraform -d /path/to/module/sourcecode show variables
-    magicdoc -p terraform show variables /path/to/module/sourcecode show variables
+    magicdoc -p terraform show variables /path/to/module/sourcecode
   Arguments:
       directory:
           Description: The target directory containing the project source variables that will be used as the documentation objective.
@@ -239,7 +243,7 @@ magicdoc show outputs:
   Examples:
     magicdoc show outputs
     magicdoc -p terraform -d /path/to/module/sourcecode show outputs
-    magicdoc -p terraform show variables /path/to/module/sourcecode show outputs
+    magicdoc -p terraform show outputs /path/to/module/sourcecode
   Arguments:
       directory:
           Description: The target directory containing the project output files that will be used as the documentation objective.
@@ -262,12 +266,187 @@ magicdoc show outputs:
 
 ```bash
 Using Provider: tf
-Using Directory Path: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+Using Directory Path: /TF-AWS-CodeBuild-Module
 
-3 tf outputs found in target project: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+3 tf outputs found in target project: /TF-AWS-CodeBuild-Module
 codebuild_project_id        = aws_codebuild_project.this.id
 codebuild_project_arn       = aws_codebuild_project.this.arn
 codebuild_project_badge_url = aws_codebuild_project.this.badge_url
+```
+
+<br><br>
+
+### `magicdoc show repo`
+
+```yaml
+magicdoc show files:
+  Examples:
+    magicdoc show repo
+    magicdoc -p terraform -d /path/to/module/sourcecode show repo
+    magicdoc -p terraform -d /path/to/module/sourcecode show repo -n rnason -r myRepo
+    magicdoc -p terraform -d /path/to/module/sourcecode show repo -n rnason -r myRepo -t 12345678901....
+    magicdoc -p terraform show repo /path/to/module/sourcecode -n rnason -r myRepo -t 12345678901...
+  Arguments:
+      directory:
+          Description: The target directory containing the project source files that will be used as the documentation objective, this argument can be used to automatically pull the git repo options from .git/config.
+          Value: /path/to/project/files
+          Default: ./
+          Required: No, If no directory is specified then magicdoc will use the current working directory.
+  Options:
+      namespace:
+          Description: Specify the repository namespace that will be used to search for the git repository.
+          Value: rnason
+          Flag: --namespace, -n
+          Environment Variable: MAGICDOC_SHOW_REPO_NAMESPACE
+          Default: None
+          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
+      repo:
+          Description: Specify the repository to query for the targeted project data.
+          Value: myModule
+          Flag: --repo, -r
+          Environment Variable: MAGICDOC_SHOW_REPO_REPO
+          Default: None
+          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
+      token:
+          Description: Specify a personal access token to use to access a private repository.
+          Value: '1234567890098765432112345678900987654321'
+          Flag: --token, -t
+          Environment Variable: MAGICDOC_SHOW_REPO_TOKEN
+          Default: None
+          Required: No, only necessary if the repository is not public, then it would be required to gain access to the repo data.
+```
+
+<br>
+
+```json
+Using Provider: tf
+Using Directory Path: /TF-AWS-CodeBuild-Lambda-Deployment-Pipeline-Common-Root
+
+{
+    "latest_release": "v1.1.1",
+    "repo_description": "Terraform Root Project Module to deploy CodeBuild Lambda Common Resources",
+    "repo_fullname": "NameSpace-TF/MyRepositoryName",
+    "repo_name": "MyRepositoryName",
+    "repo_owner": "NameSpace-TF",
+    "repo_owner_url": "https://github.com/NameSpace-TF",
+    "state": "pass",
+    "status_code": 200
+}
+```
+
+<br><br>
+
+### `magicdoc show release`
+
+```yaml
+magicdoc show release:
+  Examples:
+    magicdoc show release
+    magicdoc -p terraform -d /path/to/module/sourcecode show release
+    magicdoc -p terraform -d /path/to/module/sourcecode show release -n rnason -r myRepo
+    magicdoc -p terraform -d /path/to/module/sourcecode show release -n rnason -r myRepo -t 12345678901....
+    magicdoc -p terraform show release /path/to/module/sourcecode -n rnason -r myRepo -t 12345678901...
+  Arguments:
+      directory:
+          Description: The target directory containing the project source files that will be used as the documentation objective, this argument can be used to automatically pull the git repo options from .git/config.
+          Value: /path/to/project/files
+          Default: ./
+          Required: No, If no directory is specified then magicdoc will use the current working directory.
+  Options:
+      namespace:
+          Description: Specify the repository namespace that will be used to search for the git repository.
+          Value: rnason
+          Flag: --namespace, -n
+          Environment Variable: MAGICDOC_SHOW_REPO_NAMESPACE
+          Default: None
+          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
+      repo:
+          Description: Specify the repository to query for the targeted project data.
+          Value: myModule
+          Flag: --repo, -r
+          Environment Variable: MAGICDOC_SHOW_REPO_REPO
+          Default: None
+          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
+      token:
+          Description: Specify a personal access token to use to access a private repository.
+          Value: '1234567890098765432112345678900987654321'
+          Flag: --token, -t
+          Environment Variable: MAGICDOC_SHOW_REPO_TOKEN
+          Default: None
+          Required: No, only necessary if the repository is not public, then it would be required to gain access to the repo data.
+```
+
+<br>
+
+```json
+Using Provider: tf
+Using Directory Path: /TF-AWS-CodeBuild-Lambda-Deployment-Pipeline-Common-Root
+
+Latest Release: v1.1.1
+```
+
+<br><br>
+
+## MagicDoc Gen Commands
+
+The `magicdoc gen` command is a container for show subcommands. By itself this command will not return anything other then the help menu.
+
+```bash
+Usage: magicdoc.py show [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  files
+```
+
+<br>
+
+### `magicdoc gen dirtree`
+
+```yaml
+magicdoc gen dirtree:
+  Examples:
+    magicdoc gen dirtree
+    magicdoc -p terraform -d /path/to/module/sourcecode gen dirtree
+    magicdoc -p terraform gen dirtree /path/to/module/sourcecode
+  Arguments:
+      directory:
+          Description: The target directory containing the project source files that will be used as the documentation objective.
+          Value: /path/to/project/files
+          Default: ./
+          Required: No, If no directory is specified then magicdoc will use the current working directory.
+  Options: None
+```
+
+<br>
+
+```bash
+Using Provider: tf
+Using Directory Path: /TF-AWS-CodeBuild-Module
+
+.
+├── outputs.tf
+├── main.tf
+├── CHANGELOG.md
+├── images
+│   ├── tf_s3.png
+│   ├── optional.png
+│   ├── neon_optional.png
+│   ├── required.png
+│   └── neon_required.png
+├── example
+│   ├── env.tfvars
+│   ├── outputs.tf
+│   ├── main.tf
+│   ├── README.md
+│   └── variables.tf
+├── README.md
+├── variables.tf
+└── templates
+    ├── LambdaPy_BuildSpec.yml
+    └── LambdaJar_BuildSpec.yml
 ```
 
 <br><br>

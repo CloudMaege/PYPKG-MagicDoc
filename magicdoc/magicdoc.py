@@ -21,7 +21,7 @@ import logging, os
 
 # Import MagicDoc sub commands
 from magicdoc_show import commands as show_commands
-# from magicdoc_gen import commands as gen
+from magicdoc_gen import commands as gen_commands
 
 # Instantiate Logger
 if not os.path.exists('logs'):
@@ -59,6 +59,7 @@ def main(ctx, provider: str, directory: str):
 
 # Add Subcommand groups to main command entry point.
 main.add_command(show_commands.show)
+main.add_command(gen_commands.gen)
 
 
 if __name__ == '__main__':

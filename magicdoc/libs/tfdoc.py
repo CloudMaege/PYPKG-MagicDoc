@@ -132,10 +132,10 @@ class TFDoc(object):
                             # Add the default value to the optional variable object.
                             VarObject.update(DefaultValue=v.get('default'))
                             # Log the optional var and append to the optional vars list.
-                            logging.debug("Added {} to TFOptionalVars list.".format(k))
+                            log.debug("Added {} to TFOptionalVars list.".format(k))
                             TFOptionalVars.append(VarObject)
             # Add the Variable Lists to the Template Dictionary
-            logging.debug("Adding Lists to return variables dictionary")
+            log.debug("Adding Lists to return variables dictionary")
             TFVariables.update(required_vars=TFRequiredVars)
             TFVariables.update(required_vars_maxlength=TFReqMaxLen)
             TFVariables.update(optional_vars=TFOptionalVars)
@@ -150,8 +150,8 @@ class TFDoc(object):
         except Exception as e:
             cprint(" EXCEPTION ENCOUNTERED: ", 'grey', 'on_red')
             cprint("Error encountered attempting to construct terraform variables list:\n\nException: {}\n".format(str(e)), 'red')
-            logging.error("Unexpected Error occurred attempting to construct terraform variables list.")
-            logging.error(str(e))
+            log.error("Unexpected Error occurred attempting to construct terraform variables list.")
+            log.error(str(e))
             raise
 
 
@@ -168,14 +168,14 @@ class TFDoc(object):
             TF_Files = self.FetchFileList()
 
             # Iterate through the project files and look for the outputs.tf file, then load it into a dict that can be sent to the doc templates.
-            logging.info("Building module output list...")
+            log.info("Building module output list...")
             for tf in TF_Files:
                 if 'outputs.tf' in tf and 'example' not in tf and 'examples' not in tf:
-                    logging.debug("outputs.tf file FOUND: [{}]".format(tf))
+                    log.debug("outputs.tf file FOUND: [{}]".format(tf))
                     with open(tf, 'r') as VarFile:
                         Outputs = hcl.load(VarFile)
-                    logging.debug("outputs.tf file open, parsing, sorting, and storing outputs...")
-                    logging.debug(json.dumps(Outputs, indent=4, sort_keys=True))
+                    log.debug("outputs.tf file open, parsing, sorting, and storing outputs...")
+                    log.debug(json.dumps(Outputs, indent=4, sort_keys=True))
 
                     # Parse each output from the outputs.tf file and build a dict that can be sent to the doc template:
                     for k, v in Outputs.get('output').items():
@@ -186,16 +186,16 @@ class TFDoc(object):
                         }
 
                         # Log the required var and append to the required vars list.
-                        logging.debug("Added {} to TFOutputs list.".format(k))
+                        log.debug("Added {} to TFOutputs list.".format(k))
                         TFOutputs.append(OutputObj)
 
             # Log all the things
-            logging.info("Output list processing completed:")
-            logging.info("{} Module outputs Collected: {}".format(len(TFOutputs), TFOutputs))
+            log.info("Output list processing completed:")
+            log.info("{} Module outputs Collected: {}".format(len(TFOutputs), TFOutputs))
             return TFOutputs
         except Exception as e:
             cprint(" EXCEPTION ENCOUNTERED: ", 'grey', 'on_red')
             cprint("Error encountered attempting to construct terraform outputs list:\n\nException: {}\n".format(str(e)), 'red')
-            logging.error("Unexpected Error occurred attempting to construct terraform outputs list.")
-            logging.error(str(e))
+            log.error("Unexpected Error occurred attempting to construct terraform outputs list.")
+            log.error(str(e))
             raise

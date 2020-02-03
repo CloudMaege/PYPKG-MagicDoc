@@ -16,12 +16,12 @@ import click
 from termcolor import colored, cprint
 
 # Import MagicDoc classes
-from libs.utils import split_path, find_filename
+from libs.utils import SetPath, SplitPath
 from libs.tfdoc import TFDoc
+from libs.github import Github
 
 # Import Base Python Modules
-from pprint import pprint
-import logging, sys, json
+import logging, sys, json, os
 
 # Instantiate Logger
 log = logging.getLogger('magicdoc.show.commands')
@@ -62,20 +62,12 @@ def show(ctx):
 # Pass context
 @click.pass_context
 
-# File subcommand call.
+# Files subcommand call.
 def files(ctx, subdir: bool, directory: str):
     """Command that will retrieve a list of files from a target directory location matching the provider type specified (terraform = .tf)"""
     try:
-        log.debug("show files command called using provided context: {}".format(ctx.obj))
-        # Set the directory location based on either the magicdoc option, or show files command argument.
-        if directory is not None:
-            path = directory
-            log.debug("Directory path location set by provided argument: {}".format(path))
-        else:
-            path = ctx.obj.get('directory', './')
-            log.debug("Directory path location set by provided context or default value: {}".format(path))
-        # Print the provided directory path.
-        cprint("Using Directory Path: {}\n".format(path), 'blue')
+        # Set the directory path based on either the passed directory arg, or the click context.
+        path = SetPath(directory, ctx)
         
         # Set the type of provider class to call
         if ctx.obj.get('provider').lower() == 'terraform' or ctx.obj.get('provider') == 'tf':
@@ -88,8 +80,8 @@ def files(ctx, subdir: bool, directory: str):
         for item in Files:
             # For the command output remove the base path specified as its redundant
             item = item.replace("{}/".format(path), "")
-            # Call split_path to find found results in subdirectories.
-            item_path_list = split_path(item)
+            # Call SplitPath to find found results in subdirectories.
+            item_path_list = SplitPath(item)
             # Print results
             if not item_path_list[0]:
                 cprint(item_path_list[1], 'white')
@@ -135,21 +127,14 @@ def files(ctx, subdir: bool, directory: str):
 def variables(ctx, subdir: bool, directory: str):
     """Command that will retrieve a list of all of the project variables from the specified project path."""
     try:
-        log.debug("show variables command called using provided context: {}".format(ctx.obj))
-        # Set the directory location based on either the magicdoc option, or show variables command argument.
-        if directory is not None:
-            path = directory
-            log.debug("Directory path location set by provided argument: {}".format(path))
-        else:
-            path = ctx.obj.get('directory', './')
-            log.debug("Directory path location set by provided context or default value: {}".format(path))
-        # Print the provided directory path.
-        cprint("Using Directory Path: {}\n".format(path), 'blue')
+        # Set the directory path based on either the passed directory arg, or the click context.
+        path = SetPath(directory, ctx)
 
         # Set the type of provider class to call
         if ctx.obj.get('provider').lower() == 'terraform' or ctx.obj.get('provider') == 'tf':
             Variables = TFDoc(path, subdir).BuildVarList()
             log.debug("Variable list retrieved from provided file path...")
+        
         # Print Required Variable Results.
         cprint("{} {} required variables found in target project: {}".format(len(Variables.get('required_vars')), ctx.obj.get('provider').lower(), path), 'green')
         for reqvar in Variables.get('required_vars', []):
@@ -162,7 +147,7 @@ def variables(ctx, subdir: bool, directory: str):
             offset = Variables.get('optional_vars_maxlength') - len(optvar.get('Name'))
             # Try to make the output nice and pretty, but if it fails, then default to normal print
             try:
-                if 'list' in optvar.get('Type'):
+                if 'list' in optvar.get('Type') and len(optvar.get('DefaultValue')) > 0:
                     print(colored("{}{} =".format(optvar.get('Name'), " " * offset), 'blue'), colored('[', 'green'))
                     for item in optvar.get('DefaultValue'):
                         if isinstance(item, dict):
@@ -214,16 +199,8 @@ def variables(ctx, subdir: bool, directory: str):
 def outputs(ctx, subdir: bool, directory: str):
     """Command that will retrieve a list of all of the project outputs from the specified project path."""
     try:
-        log.debug("show outputs command called using provided context: {}".format(ctx.obj))
-        # Set the directory location based on either the magicdoc option, or show variables command argument.
-        if directory is not None:
-            path = directory
-            log.debug("Directory path location set by provided argument: {}".format(path))
-        else:
-            path = ctx.obj.get('directory', './')
-            log.debug("Directory path location set by provided context or default value: {}".format(path))
-        # Print the provided directory path.
-        cprint("Using Directory Path: {}\n".format(path), 'blue')
+        # Set the directory path based on either the passed directory arg, or the click context.
+        path = SetPath(directory, ctx)
 
         # Set the type of provider class to call
         if ctx.obj.get('provider').lower() == 'terraform' or ctx.obj.get('provider') == 'tf':
@@ -252,8 +229,142 @@ def outputs(ctx, subdir: bool, directory: str):
         sys.exit()
 
 
+###########################
+# MagicDoc Show Repo:     #
+###########################
+@show.command()
+
+# Pass directory path to search:
+@click.argument(
+    'directory',
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    default=None,
+    required=False
+)
+
+# Provide an access token to make the repository request.
+@click.option(
+    '--token', '-t', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the git provider access token that will be used to authenticate the repository and release requests."
+)
+
+# Set repository namespace
+@click.option(
+    '--namespace', '-n', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the repository namespace under which the target repository exists."
+)
+
+# Set repository name
+@click.option(
+    '--repo', '-r', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the name of the repository being searched for."
+)
+
+# Pass context
+@click.pass_context
+
+# Files subcommand call.
+def repo(ctx, namespace: str, repo: str, directory: str, token: str):
+    """Command that will retrieve the project repository information from the projects configured GIT repository."""
+    try:
+        # Set the directory path based on either the passed directory arg, or the click context.
+        path = SetPath(directory, ctx)
+        
+        # If the namespace and repository were provided, then assign the values, if not check for .git/config file and parse.
+        if repo is not None and namespace is not None:
+            RequestObj = Github(namespace, repo, token).GetGitHubData()
+        # Try and fetch the repository URL from the configured directory.
+        elif os.path.exists("{}/.git/config".format(path)):
+            namespace, repo = ParseRepoUrl(path)
+            RequestObj = Github(namespace, repo, token).GetGitHubData()
+        else:
+            RequestObj = {'state': 'fail'}
+        print(json.dumps(RequestObj, indent=4, sort_keys=True))
+    except Exception as e:
+        cprint(" ERROR ENCOUNTERED: ", 'grey', 'on_red')
+        cprint("Warning: Failed to retrieve GIT repository data for the targeted project.", 'red')
+        cprint(str(e), 'red')
+        log.error("Warning: Failed to retrieve GIT repository data for the targeted project. Check the provided namespace and repo settings and try again.")
+        log.error(str(e))
+        sys.exit()
+
+
+###########################
+# MagicDoc Show Release:  #
+###########################
+@show.command()
+
+# Pass directory path to search:
+@click.argument(
+    'directory',
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
+    default=None,
+    required=False
+)
+
+# Provide an access token to make the repository request.
+@click.option(
+    '--token', '-t', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the git provider access token that will be used to authenticate the repository and release requests."
+)
+
+# Set repository namespace
+@click.option(
+    '--namespace', '-n', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the repository namespace under which the target repository exists."
+)
+
+# Set repository name
+@click.option(
+    '--repo', '-r', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help="Specify the name of the repository being searched for."
+)
+
+# Pass context
+@click.pass_context
+
+# Files subcommand call.
+def release(ctx, namespace: str, repo: str, directory: str, token: str):
+    """Command that will retrieve the project repository information from the projects configured GIT repository."""
+    try:
+        # Set the directory path based on either the passed directory arg, or the click context.
+        path = SetPath(directory, ctx)
+
+        # If the namespace and repository were provided, then assign the values, if not check for .git/config file and parse.
+        if repo is not None and namespace is not None:
+            RequestObj = Github(namespace, repo, token).GetLatestRelease()
+        # Try and fetch the repository URL from the configured directory.
+        elif os.path.exists("{}/.git/config".format(path)):
+            namespace, repo = ParseRepoUrl(path)
+            RequestObj = Github(namespace, repo, token).GetLatestRelease()
+        else:
+            RequestObj = "Undefined"
+        print("Latest Release: {}".format(RequestObj))
+    except Exception as e:
+        cprint(" ERROR ENCOUNTERED: ", 'grey', 'on_red')
+        cprint("Warning: Failed to retrieve GIT repository release data for the targeted project.", 'red')
+        cprint(str(e), 'red')
+        log.error("Warning: Failed to retrieve GIT repository release data for the targeted project. Check the provided namespace and repo settings and try again.")
+        log.error(str(e))
+        sys.exit()
+
+
 ###############################################
 # Add Show subcommands to Show Command Group: #
 ###############################################
 show.add_command(files)
 show.add_command(variables)
+show.add_command(outputs)
+show.add_command(repo)

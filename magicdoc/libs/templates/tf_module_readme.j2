@@ -1,0 +1,702 @@
+{# Set Example Module Name to use for module call examples #}
+{% if var.Config.Readme.Usage.ResourceName is defined -%}
+    {% set ExModuleName = var.Config.Readme.Usage.ResourceName -%}
+{% else -%}
+    {% set ExModuleName = var.Repo.name|default("example", true) -%}
+{% endif %}
+{# Set Example Module Namespace to use for module call examples #}
+{% if var.Config.Repository.NameSpace is defined -%}
+    {% set ExModuleNameSpace = var.Config.Repository.NameSpace -%}
+{% else -%}
+    {% set ExModuleNameSpace = var.Repo.owner.login|default("Example-GitHub-User", true) -%}
+{% endif %}
+{# Set Example Module Repo URL to use for module call examples #}
+{% if var.Config.Repository.RepoName is defined -%}
+    {% set ExModuleRepoURL = "%s/%s"|format(ExModuleNameSpace,var.Config.Repository.RepoName) -%}
+{% else -%}
+    {% set ExModuleRepoURL = var.Repo.full_name|default("Example-GitHub-User/Example-Terraform-Module", true) -%}
+{% endif %}
+{# Set Example Module Version to use for module call examples #}
+{% if var.Release.tag_name is defined -%}
+    {% set ExModuleVersion = var.Release.tag_name -%}
+{% else -%}
+    {% set ExModuleVersion = var.Config.Repository.Version|default("v1.0.0", true) -%}
+{% endif %}
+{# START OF README TPL #}
+<!-- VSCode Markdown Exclusions-->
+<!-- markdownlint-disable MD025 Single Title Headers-->
+{# TITLE #}
+# {{ var.Config.Readme.Title|default("Terraform Module Documentation", true) }}
+
+{# OPTIONAL HERO IMAGE #}
+{% if var.Config.Readme.HeroImage %}
+<br>
+
+![Hero]({{ var.Config.Readme.HeroImage }})
+
+<br>
+{% else %}
+<br>
+{% endif %}
+
+{# VERSION BADGE #}
+![Version-Badge](https://img.shields.io/badge/MODULE%20VERSION-{{ ExModuleVersion }}-Green?style=for-the-badge&logo=terraform&logoColor=BLUE&logoWidth=25)
+
+<br><br>
+
+# Table of Contents
+
+* [Getting Started](#getting-started)
+* [Module Pre-Requisites and Dependencies](#module-pre-requisites-and-dependencies)
+* [Module Directory Structure](#module-directory-structure)
+* [Module Usage](#module-usage)
+* [Terraform Variable Usage](#terraform-variables-usage)
+  * [Inline Variable Declaration](#inline-variable-declaration)
+  * [TFVar Variable Declaration](#tfvar-variable-declaration)
+* [Required Module Variables](#required-variables)
+{% for tfvar in var.TFRequiredVars %}
+  * :stop_sign: `{{tfvar.Name}}`
+{% endfor %}
+* [Optional Module Variables](#optional-module-variables)
+{% for tfvar in var.TFOptionalVars %}
+  * :recycle: `{{tfvar.Name}}`
+{% endfor %}
+* [Module Example Usage](#module-example-usage)
+* [Variables and TFVar Reference File Templates](#variables-and-tfvar-reference-file-templates)
+* [Module Outputs Reference File Templates](#module-outputs-reference-file-templates)
+* [Terraform Requirements](#terraform-requirements)
+* [Recommended Terraform Utilities](#recommended-terraform-utilities)
+* [Contacts and Contributions](#contacts-and-contributions)
+
+<br><br>
+
+{# GETTING STARTED #}
+# Getting Started
+
+{% if var.Config.Readme.GettingStarted is defined %}
+{{ var.Config.Readme.GettingStarted }}
+{% else %}
+{{ var.Repo.Description|default("No description has been defined for this project.", true) }}
+{% endif %}
+
+<br><br>
+
+{# PRE-REQS #}
+# Module Pre-Requisites and Dependencies
+
+{{ var.Config.Readme.PreRequisites|default("This module does not currently have any pre-requisites or dependency requirements.", true) }}
+
+<br><br>
+
+{# DIRECTORY STRUCTURE TREE #}
+# Module Directory Structure
+
+```bash
+{{ var.Tree }}
+```
+
+<br><br>
+{# Module Diagram #}
+{% if var.Diagram is defined %}
+
+# Module Diagram
+
+<br>
+
+![Module Diagram]({{ var.Diagram }})
+
+<br><br>
+{% endif %}
+
+{# MODULE EXAMPLE #}
+# Module Usage
+
+```terraform
+module "{{ ExModuleName }}" {
+    source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
+
+    // Required Variables
+    {% for tfvar in var.TFRequiredVars %}
+    {% if tfvar.Type != "map" %}
+    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {% endif %}
+    {% endfor %}
+
+    {% for tfvar in var.TFRequiredVars %}
+    {% if tfvar.Type == "map" %}
+    {{ tfvar.Name }} = {
+        {% for key, value in tfvar.ExampleValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+
+    // Optional Variables with module defined default values assigned
+    {% for tfvar in var.TFOptionalVars %}
+    {% if tfvar.Type != "map" %}
+    # {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+    {% endif %}
+    {% endfor %}
+
+    {% for tfvar in var.TFOptionalVars %}
+    {% if tfvar.Type == "map" %}
+    # {{ tfvar.Name }} = {
+        {% for key, value in tfvar.DefaultValue.items() %}
+    #   {{ key }} = "{{ value }}"
+        {% endfor %}
+    # }
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# TERRAFORM VAR EXAMPLE #}
+# Terraform Variable Usage
+
+Module variables that need to either be defined or re-defined with a non-default value can easily be hardcoded inline directly within the module call block or from within the root project that is consuming the module. If using the second approach then the root project must have it's own custom variables defined within the projects `variables.tf` file with set default values or with the values provided from a separate environmental `terraform.tfvar` file. Examples of both approaches can be found below. Note that for the standards used within this documentation, all variables will mostly use the first approach for ease of readability.
+
+<br><br>
+
+> :atom: &nbsp;[__Tip:__](Tip) <br> There is also a third way to provide variable values using Terraform data sources. A data source is a unique type of code block used within a project that either instantiates or collects data that can be referenced throughout the project. A data source, for example,  can be declared to read the terraform state file and gather all of the available information from a previously deployed project stack. Any of the data contained within the data source can then be referenced to set the value of a project or module variable.
+
+<br><br>
+
+{# INLINE VAR DECLARATION #}
+## Inline Variable Declaration
+
+```terraform
+module "{{ ExModuleName }}" {
+    source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
+
+    // Required Variables
+    {% for tfvar in var.TFRequiredVars %}
+    {% if tfvar.Type != "map" %}
+    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# FILE VAR DECLARATION #}
+## TFVar Variable Declaration
+
+<br>
+
+### :file_folder: variables.tf
+
+```terraform
+{% for tfvar in var.TFRequiredVars %}
+{% if tfvar.Type != "map" %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+}
+{% endif %}
+{% endfor %}
+```
+
+<br>
+
+### :file_folder: terraform.tfvars
+
+```terraform
+{% for tfvar in var.TFRequiredVars %}
+{% if tfvar.Type != "map" %}
+{{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+{% endif %}
+{% endfor %}
+```
+
+<br>
+
+### :file_folder: main.tf
+
+```terraform
+module "{{ ExModuleName }}" {
+    source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
+
+    // Required Variables
+    {% for tfvar in var.TFRequiredVars %}
+    {% if tfvar.Type != "map" %}
+    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} var.{{ tfvar.Name }}
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# REQUIRED VARIABLES #}
+# Required Variables
+
+The following required module variables do not contain default values and must be set by the consumer of the module to use the module successfully.
+
+<br>
+
+{% for tfvar in var.TFRequiredVars %}
+## :warning: {{ tfvar.Name }}
+{# Variable Image if Provided #}
+{% if var.Config.Readme.Variables.Required.Image %}
+
+<br>
+
+![Required]({{ var.Config.Readme.Variables.Required.Image }})
+{% endif %}
+{# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
+{% if tfvar.GeneralDetails.Description %}
+
+<br>
+
+{{ tfvar.GeneralDetails.Description }}
+{% else %}
+
+<br>
+
+{{ tfvar.Description }}
+{% endif %}
+{% if tfvar.GeneralDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.GeneralDetails.Note }}
+{% endif %}
+{% if tfvar.GeneralDetails.Image %}
+
+<br><br>
+
+![{{ tfvar.Name }}]({{ tfvar.GeneralDetails.Image }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END GENERALDETAILS SECTION #}
+
+### :file_folder: Declaration of {{ tfvar.Name }} within the modules variables.tf file
+
+```terraform
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+}
+```
+{# BEGIN VARDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.VarDetails.Description %}
+
+<br>
+
+{{ tfvar.VarDetails.Description }}
+{% endif %}
+{% if tfvar.VarDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.VarDetails.Note }}
+{% endif %}
+{% if tfvar.VarDetails.Image %}
+
+<br><br>
+
+![Declaring {{ tfvar.Name }}]({{ tfvar.VarDetails.Image }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END VARDETAILS SECTION #}
+
+### :file_folder: Setting the {{ tfvar.Name }} module variable within a projects root main.tf file
+
+```terraform
+module "{{ ExModuleName }}" {
+    source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
+
+    // Required Variables
+    {% if tfvar.Type != "map" %}
+    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {% else %}
+    {{ tfvar.Name }} = {
+        {% for key, value in tfvar.ExampleValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+}
+```
+{# BEGIN USAGEDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.UsageDetails.Description %}
+
+<br>
+
+{{ tfvar.UsageDetails.Description }}
+{% endif %}
+{% if tfvar.UsageDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.UsageDetails.Note }}
+{% endif %}
+{% if tfvar.UsageDetails.Image %}
+
+<br><br>
+
+![{{ tfvar.Name }} Usage Example]({{ tfvar.UsageDetails.Image }})
+
+<br><br><br>
+
+{% else %}
+
+<br><br><br>
+
+{% endif %}
+{% endfor %}
+{# END USAGEDETAILS SECTION #}
+{# OPTIONAL VARIABLES -#}
+# Optional Module Variables
+
+The following optional module variables are not required because they already have default values assigned when the variables where defined within the modules `variables.tf` file. If the default values do not need to be changed by the root project consuming the module, then they do not even need to be included in the root project. If any of the variables do need to be changed, then they can be added to the root project in the same way that the required variables were defined and utilized. Optional variables also may alter how the module provisions resources in the cases of encryption or IAM policy generation. A variable could flag an encryption requirement when provisioning an S3 bucket or Dynamo table by providing a KMS CMK, for example. Another use case may be the passage of ARN values to allow users or roles access to services or resources, whereas by default permissions would be more restrictive or only assigned to the account root or a single IAM role. A detailed explanation of each of these optional variables can be found below:
+
+<br>
+
+{% for tfvar in var.TFOptionalVars %}
+## :white_check_mark: {{ tfvar.Name }}
+{# Variable Image if Provided #}
+{% if var.Config.Readme.Variables.Optional.Image %}
+
+<br>
+
+![Optional]({{ var.Config.Readme.Variables.Optional.Image }})
+{% endif %}
+{# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
+{% if tfvar.GeneralDetails.Description %}
+
+<br>
+
+{{ tfvar.GeneralDetails.Description }}
+{% else %}
+
+<br>
+
+{{ tfvar.Description }}
+{% endif %}
+{% if tfvar.GeneralDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.GeneralDetails.Note }}
+{% endif %}
+{% if tfvar.GeneralDetails.Image %}
+
+<br><br>
+
+![{{ tfvar.Name }}]({{ tfvar.GeneralDetails.Image }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END GENERALDETAILS SECTION #}
+
+### :file_folder: Declaration of {{ tfvar.Name }} within the modules variables.tf file
+
+```terraform
+{% if tfvar.Type != "map" %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+    default     = {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+}
+
+{% else %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+    default     = {
+        {% for key, value in tfvar.DefaultValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+{% endif %}
+}
+```
+{# BEGIN VARDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.VarDetails.Description %}
+
+<br>
+
+{{ tfvar.VarDetails.Description }}
+{% endif %}
+{% if tfvar.VarDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.VarDetails.Note }}
+{% endif %}
+{% if tfvar.VarDetails.Image %}
+
+<br><br>
+
+![Declaring {{ tfvar.Name }}]({{ tfvar.VarDetails.Image }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END VARDETAILS SECTION #}
+
+### :file_folder: Setting the {{ tfvar.Name }} module variable within a projects root main.tf file
+
+```terraform
+module "{{ ExModuleName }}" {
+    source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
+
+    // Required Variables
+    {% for variable in var.TFRequiredVars %}
+    {% if variable.Type != "map" %}
+    {{ variable.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - variable.Name|length + 1, true) }} {{ "variable.ExampleValue"|e if variable.Type == "String" else variable.ExampleValue }}
+    {% endif %}
+    {% endfor %}
+
+    {% for variable in var.TFRequiredVars %}
+    {% if variable.Type == "map" %}
+    {{ variable.Name }} = {
+        {% for key, value in variable.ExampleValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+
+    // Optional Variables with module defined default values assigned
+    {% if tfvar.Type != "map" %}
+    {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {% else %}
+    {{ tfvar.Name }} = {
+        {% for key, value in tfvar.ExampleValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+}
+```
+{# BEGIN USAGEDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.UsageDetails.Description %}
+
+<br>
+
+{{ tfvar.UsageDetails.Description }}
+{% endif %}
+{% if tfvar.UsageDetails.Note %}
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> {{ tfvar.UsageDetails.Note }}
+{% endif %}
+{% if tfvar.UsageDetails.Image %}
+
+<br><br>
+
+![{{ tfvar.Name }} Usage Example]({{ tfvar.UsageDetails.Image }})
+
+<br><br><br>
+
+{% else %}
+
+<br><br><br>
+
+{% endif %}
+{% endfor %}
+{# END USAGEDETAILS SECTION #}
+{# MODULE EXAMPLE FILES MENTION #}
+# Module Example Usage
+
+An example of how to use this module can be found within the `example` directory of this repository.
+
+<br><br>
+
+# Variables and TFVar Reference File Templates
+
+The following code blocks can be used or appended to an existing `variables.tf` file or `terraform.tfvars` file respectively within the project root consuming this module. Optional Variables are commented out and have their values set to the default values defined in the module's variables.tf/terraform.tfvars respective file. If the values of any optional variables do not need to be changed, then they do not need to be redefined or included in the project root. If they do need to be changed, then add them to the root project and change the values according to the project requirements.
+
+<br><br>
+
+## :file_folder: Module variables.tf Reference File
+
+```terraform
+###########################################################################
+# Required {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables require consumer defined values to be provided. #
+###########################################################################
+{% for tfvar in var.TFRequiredVars %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+}
+
+{% endfor %}
+
+###########################################################################
+# Optional {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables have default values already set by the module.  #
+# They will not need to be included in a project root module variables.tf #
+# file unless a non-default value needs be assigned to the variable.      #
+###########################################################################
+{% for tfvar in var.TFOptionalVars %}
+{% if tfvar.Type != "map" %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+    default     = {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+}
+{% endif %}
+
+{%- endfor %}
+
+{% for tfvar in var.TFOptionalVars %}
+{% if tfvar.Type == "map" %}
+variable "{{ tfvar.Name }}" {
+    type        = {{ tfvar.Type }}
+    description = "{{ tfvar.Description }}"
+    default     = {
+        {% for key, value in tfvar.DefaultValue.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+}
+{% endif %}
+
+{%- endfor %}
+```
+
+<br><br>
+
+## :file_folder: Module TFVars Reference File
+
+```terraform
+###########################################################################
+# Required {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables require consumer defined values to be provided. #
+###########################################################################
+{% for tfvar in var.TFRequiredVars %}
+{% if tfvar.Type != "map" %}
+{{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} "Value Required"
+{% endif %}
+{% endfor %}
+
+{% for tfvar in var.TFRequiredVars %}
+{% if tfvar.Type == "map" %}
+{{ tfvar.Name }} = {
+    "Key Required" = "Value Required"
+    "Key Required" = "Value Required"
+}
+{% endif %}
+{% endfor %}
+
+###########################################################################
+# Optional {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables have default values already set by the module.  #
+# They will not need to be included in a project root module variables.tf #
+# file unless a non-default value needs be assigned to the variable.      #
+###########################################################################
+{% for tfvar in var.TFOptionalVars %}
+{% if tfvar.Type != "map" %}
+# {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+{% endif %}
+{% endfor %}
+
+{% for tfvar in var.TFOptionalVars %}
+{% if tfvar.Type == "map" %}
+# {{ tfvar.Name }} = {
+    {% for key, value in tfvar.DefaultValue.items() %}
+#   {{ key }} = "{{ value }}"
+    {% endfor %}
+}
+{% endif %}
+
+{%- endfor %}
+```
+
+<br><br>
+
+# Module Outputs Reference File Templates
+
+The template will finally create the following outputs that can be pulled and used in subsequent terraform runs via data sources. The outputs will be written to the Terraform state file. When using and calling the module within a root project, the output values of the module are available to the project root by simply referencing the module outputs from the root project `outputs.tf` file.
+
+<br><br>
+
+## :file_folder: Module outputs.tf Reference File
+
+```terraform
+##############################################
+# {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Available Module Outputs:
+##############################################
+{% for output in var.TFOutputs %}
+output "{{ output.Name }}" {
+    {{ output.Output }}
+}
+{% endfor %}
+```
+
+<br><br>
+
+## :file_folder: Module Output Usage Reference File
+
+```terraform
+##############################################
+# {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Output Usage:
+##############################################
+{% for output in var.TFOutputs %}
+output "{{ output.Name }}" {
+    value = module.{{ ExModuleName }}.{{ output.Name }}
+}
+{% endfor %}
+```
+
+<br><br>
+
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> When referencing the module outputs be sure that the output value contains the identifier given to the module call. As an example, if the module was defined as `module "{{ ExModuleName }}" {}` then the output reference would be constructed as `module.{{ ExModuleName }}.{{ var.TFOutputs[0].Name|default("arn", true) }}`.
+
+<br><br>
+
+# Terraform Requirements
+
+* [Terraform](https://www.terraform.io/)
+* [GIT](https://git-scm.com/download/win)
+* [AWS-Account](https://https://aws.amazon.com/)
+
+<br><br>
+
+# Recommended Terraform Utilities
+
+* [Terraform for VSCode](https://github.com/mauve/vscode-terraform)
+* [Terraform Config Inspect](https://github.com/hashicorp/terraform-config-inspect)
+
+<br><br>
+
+# Contacts and Contributions
+{% if var.Repo %}
+
+This project is owned and maintained by [{{var.Config.Repository.Owner|default(var.Repo.owner.login, true)}}]({{ var.Repo.owner.html_url }})
+
+<br>
+{% endif %}
+
+To contribute, please:
+
+* Fork the project
+* Create a local branch
+* Submit Changes
+* Create A Pull Request
