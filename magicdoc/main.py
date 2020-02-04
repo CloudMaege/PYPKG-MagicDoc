@@ -20,8 +20,8 @@ from datetime import datetime
 import logging, os
 
 # Import MagicDoc sub commands
-from magicdoc_show import commands as show_commands
-from magicdoc_gen import commands as gen_commands
+from magicdoc.magicdoc_show import commands as show_commands
+from magicdoc.magicdoc_gen import commands as gen_commands
 
 # Instantiate Logger
 if not os.path.exists('logs'):

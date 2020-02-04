@@ -1,2 +1,1 @@
-__version__ = '0.0.1'
-# from .magicdoc import magicdoc
+__version__ = '0.0.3'
