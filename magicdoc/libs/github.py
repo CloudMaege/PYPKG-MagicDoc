@@ -91,7 +91,7 @@ class Github(object):
                 ResponseObj.update(repo_owner=self.repo_namespace)
                 ResponseObj.update(repo_owner_url="https://github.com/{}".format(self.repo_namespace))
                 cprint(" WARNING ENCOUNTERED: ", 'grey', 'on_yellow')
-                cprint("Error encountered attempting to send GitHub repository request to: {}".format(RepoURL), 'yellow')
+                cprint("Error encountered attempting to send GitHub repository request to: {}".format(self.github_repo_url), 'yellow')
                 cprint("GitHub repo data will be unavailable when rendering documentation.\n", 'yellow')
                 cprint("GitHub Response Code: [{}]".format(Req.status_code), 'blue')
                 cprint("GitHub Response Message: {}\n".format(json.dumps(response, indent=4, sort_keys=True)), 'blue')
@@ -128,7 +128,7 @@ class Github(object):
             else:
                 Release = "UnReleased"
                 cprint(" WARNING ENCOUNTERED: ", 'grey', 'on_yellow')
-                cprint("Error encountered attempting to send GitHub repository release request to: {}".format(RepoURL), 'yellow')
+                cprint("Error encountered attempting to send GitHub repository release request to: {}".format(self.github_releases_url), 'yellow')
                 cprint("GitHub release data will be unavailable when rendering documentation.\n", 'yellow')
                 cprint("GitHub Response Code: [{}]".format(Req.status_code), 'blue')
                 cprint("GitHub Response Message: {}\n".format(json.dumps(Release, indent=4, sort_keys=True)), 'blue')

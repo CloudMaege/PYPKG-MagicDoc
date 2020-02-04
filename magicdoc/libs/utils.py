@@ -68,19 +68,19 @@ def BuildDirTree(DirPath: Path, DirPrefix: str=''):
         pass
 
 
-def DirTree(Path):
+def DirTree(DirPath):
     """Function will use the BuildDirTree Generator to generate a directory path ascii tree, store the output and return it to the caller."""
     try:
         log.debug("Attempting to build directory tree variable...")
         # Set a variable for the Directory tree, and then call the Directory Tree Generator
-        DirTree = ".\n"
-        for line in BuildDirTree(Path(Path)):
+        Tree = ".\n"
+        for line in BuildDirTree(Path(DirPath)):
             if line != "":
-                DirTree += "{}\n".format(line)
+                Tree += "{}\n".format(line)
         log.debug("Directory Tree variable created successfully:")
-        log.debug("\n{}".format(DirTree))
+        log.debug("\n{}".format(Tree))
         # Return the tree to the caller:
-        return DirTree
+        return Tree
     except Exception as e:
         cprint(" EXCEPTION ENCOUNTERED: ", 'grey', 'on_red')
         cprint("Error encountered requesting directory tree return object:\n\nException: {}".format(str(e)), 'red')

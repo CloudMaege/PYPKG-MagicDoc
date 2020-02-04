@@ -15,10 +15,11 @@
 from termcolor import colored, cprint
 from python_terraform import *
 import hcl, yaml, requests
+from graphviz import Source
 
 # Import Base Python Modules
 from datetime import datetime
-import logging, os
+import logging, os, shutil
 
 # Instantiate Logger
 log = logging.getLogger('magicdoc.libs.tfdoc')
@@ -197,5 +198,47 @@ class TFDoc(object):
             cprint(" EXCEPTION ENCOUNTERED: ", 'grey', 'on_red')
             cprint("Error encountered attempting to construct terraform outputs list:\n\nException: {}\n".format(str(e)), 'red')
             log.error("Unexpected Error occurred attempting to construct terraform outputs list.")
+            log.error(str(e))
+            raise
+
+
+    ##############################################
+    # Construct Terraform Graph:                 #
+    ##############################################
+    def BuildGraph(self):
+        '''Class method that runs a terraform graph on the module source code and produces a dot style diagram.'''
+        try:
+            # File Save Directory and Graph FileName values
+            # TODO: Make this into a config variable
+            ModuleImageDir = os.path.join(self.path, "images")
+            TFGraphFileName = "tf_graph"
+
+            # Make sure the Image Directory exists, if not then create it.
+            if not os.path.exists(ModuleImageDir):
+                os.makedirs(ModuleImageDir)
+            
+            # Instantiate the TF Object
+            TF = Terraform(working_dir=self.path)
+            
+            # Check to see if TF has been initialzed, and if not initialize it
+            if not os.path.exists(os.path.join(self.path, ".terraform")):
+                TF.cmd('init')
+            
+            # Run a Terraform Graph action to generate the graph dot structure
+            TFGraphFetch = TF.cmd('graph')
+            TFGraph = TFGraphFetch[1]
+            
+            if shutil.which('dot') is not None:
+                # Instantiate Graphviz and render the file 
+                log.info("dot executable found..  Generating terraform graph...")
+                dot = Source(TFGraph, directory=ModuleImageDir, filename=TFGraphFileName, format='png')
+                dot.render()
+                return "{}/{}.png".format("images/", TFGraphFileName)
+            else:
+                return "None"
+        except Exception as e:
+            cprint(" EXCEPTION ENCOUNTERED: ", 'grey', 'on_red')
+            cprint("Error encountered attempting to construct terraform variables list:\n\nException: {}\n".format(str(e)), 'red')
+            log.error("Unexpected Error occurred attempting to construct terraform variables list.")
             log.error(str(e))
             raise

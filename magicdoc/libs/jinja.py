@@ -19,7 +19,7 @@ from termcolor import colored, cprint
 from .utils import SplitPath
 
 # Import Base Python Modules
-import logging, json, os, sys
+import logging, json, os, sys, shutil
 
 # Instantiate Logger
 log = logging.getLogger('magicdoc.libs.jinja')
@@ -195,7 +195,7 @@ class Jinja(object):
             sys.exit()
 
     
-    def WriteTemplate(self, OutputDir=None, OutputFile=None, Overwrite=False):
+    def WriteTemplate(self, OutputDir=None, OutputFile=None, Overwrite=False, Backup=True):
         """Class Method to write the rendered template file to disk."""
         # Send output dir and output file to their respective setters.
         if OutputDir is not None:
@@ -207,8 +207,12 @@ class Jinja(object):
         log.info('Output path set to: {}'.format(Output))
 
         if os.path.exists(Output) and not Overwrite:
-            cprint("Configuration file already exists in the specified output path provided. Backup your file and re-run this command with the --overwrite flag to replace the existing config file.")
-            sys.exit()
+            if Backup:
+                log.info("Creating backup of existing README file...")
+                shutil.copy(Output, "{}.bak".format(Output))
+            else:
+                cprint("Configuration file already exists in the specified output path provided. Backup your file and re-run this command with the --overwrite flag to replace the existing config file.")
+                sys.exit()
         
         if not os.path.exists(Output) or Overwrite:
             # Write the template to disk

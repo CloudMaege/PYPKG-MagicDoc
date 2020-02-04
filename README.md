@@ -450,3 +450,456 @@ Using Directory Path: /TF-AWS-CodeBuild-Module
 ```
 
 <br><br>
+
+### `magicdoc gen config`
+
+```yaml
+magicdoc gen config:
+  Examples:
+    magicdoc gen config
+    magicdoc -p terraform -d /path/to/module/sourcecode gen config
+    magicdoc -p terraform gen config /path/to/module/sourcecode
+  Arguments:
+      directory:
+          Description: The destination directory where the config file will be written to upon rendering.
+          Value: /path/to/project/files
+          Default: ./
+          Required: No, If no directory is specified then magicdoc will use the current working directory.
+  Options:
+      template_dir:
+          Description: Specify the directory path location of the directory that contains the desired config jinja template. Default settting will use the packaged template.
+          Value: /path/to/templates/directory
+          Flag: --template_dir, -td
+          Environment Variable: MAGICDOC_GEN_CONFIG_TEMPLATE_DIR
+          Default: None (Class assign's default value of the internal package template directory.)
+          Required: No
+      template:
+          Description: Specify the jinja template file that will be used to generate the project config. Default value is the packaged magicdoc config template.
+          Value: /path/to/templates/template
+          Flag: --template, -t
+          Environment Variable: MAGICDOC_GEN_CONFIG_TEMPLATE
+          Default: magicdoc_config.j2
+          Required: No
+      filename:
+          Description: Specify the name that will be used for the config file output. Default is README.yaml.
+          Value: magicdoc.yaml (Must be saved as YAML for future processing and usage)
+          Flag: --filename, -f
+          Environment Variable: MAGICDOC_GEN_CONFIG_FILENAME
+          Default: README.yaml
+          Required: No
+      overwrite:
+          Description: Flag to allow over writing the current configuration file if one already exists in the provided config output path.
+          Value:
+            - True
+            - False
+          Flag: --overwrite, -ow
+          Environment Variable: MAGICDOC_GEN_CONFIG_OVERWRITE
+          Default: False
+          Required: No
+```
+
+<br>
+
+```bash
+#############################
+# Repository Configuration: #
+#############################
+Repository:
+    OwnerOverride:
+    NameSpace:
+    Name:
+    Version:
+
+############################
+# README.md Configuration: #
+############################
+README:
+    Title: 
+    HeroImage:
+    DocLink:
+    #=====================#
+    # README.md Sections: #
+    #=====================#
+    GettingStarted: >-
+        Project Description.....
+    PreRequisites: >-
+        This module does not currently have any pre-requisites or dependency requirements.
+    Usage:
+        ExampleResourceName:
+############################
+# Variables Configuration: #
+############################
+Variables:
+    #=====================#
+    # Required Variables: #
+    #=====================#
+    Required:
+        Image:
+        codebuild_project_name:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the Name that will be given to the CodeBuild project that will be deployed.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_project_desc:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify a description for the CodeBuild project that will be deployed.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_service_role_arn:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the ARN of the role that will be assumed by the CodeBuild service to execute the build job.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_source_type:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the source repository type or vendor that this CodeBuild job will use. Valid Values are CODECOMMIT, CODEPIPELINE, GITHUB, GITHUB_ENTERPRISE, BITBUCKET, S3 or NO_SOURCE
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_source_url:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the source repository URL that CodeBuild will clone from. This is the repository of the project that will be build by this CodeBuild job.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_vpc:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the Id of the VPC that CodeBuild will be launched into. Example: vpc-xxxxxxxx
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_subnet_list:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the subnets that CodeBuild will be placed on within the specified VPC
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_sg_list:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the Security Groups that will be applied to the CodeBuild job within the specified VPC
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+    #=====================#
+    # Optional Variables: #
+    #=====================#
+    Optional:
+        Image:
+        codebuild_timeout:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the max amount of time in minutes that the CodeBuild job can run. Value must between 5 Min and 480 Min or 8 hours. Default value 15 min
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_badge:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify if CodeBuild should construct a build state badge for the project. Default True
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_artifact_type:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify type of artifact that the provisioned CodeBuild job will produce. Valid values are CODEPIPELINE, S3, or NO_ARTIFACTS. Default set NO_ARTIFACTS
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_artifact_encryption:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify if any CodeBuild artifacts should be encrypted. This option only applies to artifacts that will be pushed to S3. Default False
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_encryption_key:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the ARN of the KMS CMK that will be used to encrypt object pushed to the supplied S3 bucket. This option only applies if codebuild_artifact_encryption is true
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_artifact_bucket:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the Name of the S3 bucket that will be used for built artifact storage.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_artifact_path:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the path in the destination artifact bucket where produced artifacts will be pushed. Default set to /
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_source_branch:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the GIT repository branch that the codebuild job will monitor and pull from.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_buildspec:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the local path or repo file name of the buildspec file that will used during build execution. Available pre-built buildspecs are 'LambdaPy' and LambdaJar
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_buildspec_type:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify if the provided buildspec file value references a pre-built file template or simply a file name. Valid values are 'FILE', 'FILENAME' and 'PREBUILT'
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_env_compute_type:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the CodeBuild environment Compute Type to be provisioned. Valid Values are BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM and BUILD_GENERAL1_LARGE.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_env_image:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the image that CodeBuild will use for the build environment. Default set to Ubuntu aws/codebuild/standard:1.0
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_env_type:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify the CodeBuild environment type. Valid Values are 'LINUX_CONTAINER' and 'WINDOWS_CONTAINER'. Default set to LINUX_CONTAINER
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        codebuild_env_variables:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify a map of environment variables that will be passed to and used by the CodeBuild job.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        webhook_enable:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify if a webhook should be created and added to the CodeBuild job to build on commit.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+        webhook_trigger:
+            ExampleValue:
+            GeneralDetails:
+                Description: >-
+                    Specify a comma separated string of event types that will trigger the execution of this job. Valid values are PUSH, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PULL_REQUEST_MERGED.
+                Note:
+                Image:
+            VarDetails:
+                Description:
+                Note:
+                Image:
+            UsageDetails:
+                Description:
+                Note:
+                Image:
+```
+
+<br><br>

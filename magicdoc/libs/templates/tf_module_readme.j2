@@ -1,38 +1,38 @@
 {# Set Example Module Name to use for module call examples #}
-{% if var.Config.Readme.Usage.ResourceName is defined -%}
-    {% set ExModuleName = var.Config.Readme.Usage.ResourceName -%}
+{% if var.readme.Usage.ResourceName is defined -%}
+    {% set ExModuleName = var.readme.Usage.ResourceName -%}
 {% else -%}
-    {% set ExModuleName = var.Repo.name|default("example", true) -%}
+    {% set ExModuleName = var.repo.repo_name|default("example", true) -%}
 {% endif %}
 {# Set Example Module Namespace to use for module call examples #}
-{% if var.Config.Repository.NameSpace is defined -%}
-    {% set ExModuleNameSpace = var.Config.Repository.NameSpace -%}
+{% if var.git.NameSpace is defined -%}
+    {% set ExModuleNameSpace = var.git.NameSpace -%}
 {% else -%}
-    {% set ExModuleNameSpace = var.Repo.owner.login|default("Example-GitHub-User", true) -%}
+    {% set ExModuleNameSpace = var.repo.repo_owner|default("Example-GitHub-User", true) -%}
 {% endif %}
 {# Set Example Module Repo URL to use for module call examples #}
-{% if var.Config.Repository.RepoName is defined -%}
-    {% set ExModuleRepoURL = "%s/%s"|format(ExModuleNameSpace,var.Config.Repository.RepoName) -%}
+{% if var.git.Name is defined -%}
+    {% set ExModuleRepoURL = "%s/%s"|format(ExModuleNameSpace,var.git.Name) -%}
 {% else -%}
-    {% set ExModuleRepoURL = var.Repo.full_name|default("Example-GitHub-User/Example-Terraform-Module", true) -%}
+    {% set ExModuleRepoURL = var.repo.repo_fullname|default("Example-GitHub-User/Example-Terraform-Module", true) -%}
 {% endif %}
 {# Set Example Module Version to use for module call examples #}
-{% if var.Release.tag_name is defined -%}
-    {% set ExModuleVersion = var.Release.tag_name -%}
+{% if var.repo.latest_release is defined -%}
+    {% set ExModuleVersion = var.repo.latest_release -%}
 {% else -%}
-    {% set ExModuleVersion = var.Config.Repository.Version|default("v1.0.0", true) -%}
+    {% set ExModuleVersion = var.git.Version|default("v1.0.0", true) -%}
 {% endif %}
 {# START OF README TPL #}
 <!-- VSCode Markdown Exclusions-->
 <!-- markdownlint-disable MD025 Single Title Headers-->
 {# TITLE #}
-# {{ var.Config.Readme.Title|default("Terraform Module Documentation", true) }}
+# {{ var.readme.Title|default("Terraform Module Documentation", true) }}
 
 {# OPTIONAL HERO IMAGE #}
-{% if var.Config.Readme.HeroImage %}
+{% if var.readme.HeroImage %}
 <br>
 
-![Hero]({{ var.Config.Readme.HeroImage }})
+![Hero]({{ var.readme.HeroImage }})
 
 <br>
 {% else %}
@@ -54,11 +54,11 @@
   * [Inline Variable Declaration](#inline-variable-declaration)
   * [TFVar Variable Declaration](#tfvar-variable-declaration)
 * [Required Module Variables](#required-variables)
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
   * :stop_sign: `{{tfvar.Name}}`
 {% endfor %}
 * [Optional Module Variables](#optional-module-variables)
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
   * :recycle: `{{tfvar.Name}}`
 {% endfor %}
 * [Module Example Usage](#module-example-usage)
@@ -73,10 +73,10 @@
 {# GETTING STARTED #}
 # Getting Started
 
-{% if var.Config.Readme.GettingStarted is defined %}
-{{ var.Config.Readme.GettingStarted }}
+{% if var.readme.GettingStarted is defined %}
+{{ var.readme.GettingStarted }}
 {% else %}
-{{ var.Repo.Description|default("No description has been defined for this project.", true) }}
+{{ var.repo.repo_description|default("No description has been defined for this project.", true) }}
 {% endif %}
 
 <br><br>
@@ -84,7 +84,7 @@
 {# PRE-REQS #}
 # Module Pre-Requisites and Dependencies
 
-{{ var.Config.Readme.PreRequisites|default("This module does not currently have any pre-requisites or dependency requirements.", true) }}
+{{ var.readme.PreRequisites|default("This module does not currently have any pre-requisites or dependency requirements.", true) }}
 
 <br><br>
 
@@ -92,18 +92,18 @@
 # Module Directory Structure
 
 ```bash
-{{ var.Tree }}
+{{ var.tree }}
 ```
 
 <br><br>
 {# Module Diagram #}
-{% if var.Diagram is defined %}
+{% if var.tfdiagram is defined %}
 
 # Module Diagram
 
 <br>
 
-![Module Diagram]({{ var.Diagram }})
+![Module Diagram]({{ var.tfdiagram }})
 
 <br><br>
 {% endif %}
@@ -116,14 +116,14 @@ module "{{ ExModuleName }}" {
     source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
 
     // Required Variables
-    {% for tfvar in var.TFRequiredVars %}
-    {% if tfvar.Type != "map" %}
-    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {% for tfvar in var.variables.required_vars %}
+    {% if "map" not in tfvar.Type %}
+    {{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
     {% endif %}
     {% endfor %}
 
-    {% for tfvar in var.TFRequiredVars %}
-    {% if tfvar.Type == "map" %}
+    {% for tfvar in var.variables.required_vars %}
+    {% if "map" in tfvar.Type %}
     {{ tfvar.Name }} = {
         {% for key, value in tfvar.ExampleValue.items() %}
         {{ key }} = "{{ value }}"
@@ -133,13 +133,13 @@ module "{{ ExModuleName }}" {
     {% endfor %}
 
     // Optional Variables with module defined default values assigned
-    {% for tfvar in var.TFOptionalVars %}
+    {% for tfvar in var.variables.optional_vars %}
     {% if tfvar.Type != "map" %}
-    # {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+    # {{ tfvar.Name }}{{ "="|indent(var.variables.optional_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
     {% endif %}
     {% endfor %}
 
-    {% for tfvar in var.TFOptionalVars %}
+    {% for tfvar in var.variables.optional_vars %}
     {% if tfvar.Type == "map" %}
     # {{ tfvar.Name }} = {
         {% for key, value in tfvar.DefaultValue.items() %}
@@ -172,9 +172,9 @@ module "{{ ExModuleName }}" {
     source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
 
     // Required Variables
-    {% for tfvar in var.TFRequiredVars %}
+    {% for tfvar in var.variables.required_vars %}
     {% if tfvar.Type != "map" %}
-    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
     {% endif %}
     {% endfor %}
 }
@@ -190,7 +190,7 @@ module "{{ ExModuleName }}" {
 ### :file_folder: variables.tf
 
 ```terraform
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 {% if tfvar.Type != "map" %}
 variable "{{ tfvar.Name }}" {
     type        = {{ tfvar.Type }}
@@ -205,9 +205,9 @@ variable "{{ tfvar.Name }}" {
 ### :file_folder: terraform.tfvars
 
 ```terraform
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 {% if tfvar.Type != "map" %}
-{{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+{{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
 {% endif %}
 {% endfor %}
 ```
@@ -221,9 +221,9 @@ module "{{ ExModuleName }}" {
     source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
 
     // Required Variables
-    {% for tfvar in var.TFRequiredVars %}
+    {% for tfvar in var.variables.required_vars %}
     {% if tfvar.Type != "map" %}
-    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} var.{{ tfvar.Name }}
+    {{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} var.{{ tfvar.Name }}
     {% endif %}
     {% endfor %}
 }
@@ -238,14 +238,14 @@ The following required module variables do not contain default values and must b
 
 <br>
 
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 ## :warning: {{ tfvar.Name }}
 {# Variable Image if Provided #}
-{% if var.Config.Readme.Variables.Required.Image %}
+{% if var.variables.required_image %}
 
 <br>
 
-![Required]({{ var.Config.Readme.Variables.Required.Image }})
+![Required]({{ var.variables.required_image }})
 {% endif %}
 {# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
 {% if tfvar.GeneralDetails.Description %}
@@ -320,7 +320,7 @@ module "{{ ExModuleName }}" {
 
     // Required Variables
     {% if tfvar.Type != "map" %}
-    {{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
     {% else %}
     {{ tfvar.Name }} = {
         {% for key, value in tfvar.ExampleValue.items() %}
@@ -365,14 +365,14 @@ The following optional module variables are not required because they already ha
 
 <br>
 
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
 ## :white_check_mark: {{ tfvar.Name }}
 {# Variable Image if Provided #}
-{% if var.Config.Readme.Variables.Optional.Image %}
+{% if var.variables.optional_image %}
 
 <br>
 
-![Optional]({{ var.Config.Readme.Variables.Optional.Image }})
+![Optional]({{ var.variables.optional_image }})
 {% endif %}
 {# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
 {% if tfvar.GeneralDetails.Description %}
@@ -460,13 +460,13 @@ module "{{ ExModuleName }}" {
     source = "git@github.com:{{ ExModuleRepoURL }}?ref={{ ExModuleVersion }}"
 
     // Required Variables
-    {% for variable in var.TFRequiredVars %}
+    {% for variable in var.variables.required_vars %}
     {% if variable.Type != "map" %}
-    {{ variable.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - variable.Name|length + 1, true) }} {{ "variable.ExampleValue"|e if variable.Type == "String" else variable.ExampleValue }}
+    {{ variable.Name }}{{ "="|indent(var.variables.required_vars_maxlength - variable.Name|length + 1, true) }} {{ "variable.ExampleValue"|e if variable.Type == "String" else variable.ExampleValue }}
     {% endif %}
     {% endfor %}
 
-    {% for variable in var.TFRequiredVars %}
+    {% for variable in var.variables.required_vars %}
     {% if variable.Type == "map" %}
     {{ variable.Name }} = {
         {% for key, value in variable.ExampleValue.items() %}
@@ -478,7 +478,7 @@ module "{{ ExModuleName }}" {
 
     // Optional Variables with module defined default values assigned
     {% if tfvar.Type != "map" %}
-    {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
+    {{ tfvar.Name }}{{ "="|indent(var.variables.optional_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.ExampleValue"|e if tfvar.Type == "String" else tfvar.ExampleValue }}
     {% else %}
     {{ tfvar.Name }} = {
         {% for key, value in tfvar.ExampleValue.items() %}
@@ -533,11 +533,11 @@ The following code blocks can be used or appended to an existing `variables.tf` 
 
 ```terraform
 ###########################################################################
-# Required {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+# Required {{ var.git.Name|default(ExModuleRepoURL, true) }} Module Vars:
 #-------------------------------------------------------------------------#
 # The following variables require consumer defined values to be provided. #
 ###########################################################################
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 variable "{{ tfvar.Name }}" {
     type        = {{ tfvar.Type }}
     description = "{{ tfvar.Description }}"
@@ -546,13 +546,13 @@ variable "{{ tfvar.Name }}" {
 {% endfor %}
 
 ###########################################################################
-# Optional {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+# Optional {{ var.git.Name|default(ExModuleRepoURL, true) }} Module Vars:
 #-------------------------------------------------------------------------#
 # The following variables have default values already set by the module.  #
 # They will not need to be included in a project root module variables.tf #
 # file unless a non-default value needs be assigned to the variable.      #
 ###########################################################################
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
 {% if tfvar.Type != "map" %}
 variable "{{ tfvar.Name }}" {
     type        = {{ tfvar.Type }}
@@ -563,7 +563,7 @@ variable "{{ tfvar.Name }}" {
 
 {%- endfor %}
 
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
 {% if tfvar.Type == "map" %}
 variable "{{ tfvar.Name }}" {
     type        = {{ tfvar.Type }}
@@ -585,17 +585,17 @@ variable "{{ tfvar.Name }}" {
 
 ```terraform
 ###########################################################################
-# Required {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+# Required {{ var.git.Name|default(ExModuleRepoURL, true) }} Module Vars:
 #-------------------------------------------------------------------------#
 # The following variables require consumer defined values to be provided. #
 ###########################################################################
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 {% if tfvar.Type != "map" %}
-{{ tfvar.Name }}{{ "="|indent(var.TFRequiredVars_MaxLength - tfvar.Name|length + 1, true) }} "Value Required"
+{{ tfvar.Name }}{{ "="|indent(var.variables.required_vars_maxlength - tfvar.Name|length + 1, true) }} "Value Required"
 {% endif %}
 {% endfor %}
 
-{% for tfvar in var.TFRequiredVars %}
+{% for tfvar in var.variables.required_vars %}
 {% if tfvar.Type == "map" %}
 {{ tfvar.Name }} = {
     "Key Required" = "Value Required"
@@ -605,19 +605,19 @@ variable "{{ tfvar.Name }}" {
 {% endfor %}
 
 ###########################################################################
-# Optional {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Vars:
+# Optional {{ var.git.Name|default(ExModuleRepoURL, true) }} Module Vars:
 #-------------------------------------------------------------------------#
 # The following variables have default values already set by the module.  #
 # They will not need to be included in a project root module variables.tf #
 # file unless a non-default value needs be assigned to the variable.      #
 ###########################################################################
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
 {% if tfvar.Type != "map" %}
-# {{ tfvar.Name }}{{ "="|indent(var.TFOptionalVars_MaxLength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
+# {{ tfvar.Name }}{{ "="|indent(var.variables.optional_vars_maxlength - tfvar.Name|length + 1, true) }} {{ "tfvar.DefaultValue"|e if tfvar.Type == "String" else tfvar.DefaultValue }}
 {% endif %}
 {% endfor %}
 
-{% for tfvar in var.TFOptionalVars %}
+{% for tfvar in var.variables.optional_vars %}
 {% if tfvar.Type == "map" %}
 # {{ tfvar.Name }} = {
     {% for key, value in tfvar.DefaultValue.items() %}
@@ -641,9 +641,9 @@ The template will finally create the following outputs that can be pulled and us
 
 ```terraform
 ##############################################
-# {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Available Module Outputs:
+# {{ var.git.Name|default(ExModuleRepoURL, true) }} Available Module Outputs:
 ##############################################
-{% for output in var.TFOutputs %}
+{% for output in var.outputs %}
 output "{{ output.Name }}" {
     {{ output.Output }}
 }
@@ -656,9 +656,9 @@ output "{{ output.Name }}" {
 
 ```terraform
 ##############################################
-# {{ var.Config.Repository.RepoName|default(ExModuleRepoURL, true) }} Module Output Usage:
+# {{ var.git.Name|default(ExModuleRepoURL, true) }} Module Output Usage:
 ##############################################
-{% for output in var.TFOutputs %}
+{% for output in var.outputs %}
 output "{{ output.Name }}" {
     value = module.{{ ExModuleName }}.{{ output.Name }}
 }
@@ -667,7 +667,7 @@ output "{{ output.Name }}" {
 
 <br><br>
 
-> :spiral_notepad: &nbsp;[__Note:__](Note) <br> When referencing the module outputs be sure that the output value contains the identifier given to the module call. As an example, if the module was defined as `module "{{ ExModuleName }}" {}` then the output reference would be constructed as `module.{{ ExModuleName }}.{{ var.TFOutputs[0].Name|default("arn", true) }}`.
+> :spiral_notepad: &nbsp;[__Note:__](Note) <br> When referencing the module outputs be sure that the output value contains the identifier given to the module call. As an example, if the module was defined as `module "{{ ExModuleName }}" {}` then the output reference would be constructed as `module.{{ ExModuleName }}.{{ var.outputs[0].Name|default("arn", true) }}`.
 
 <br><br>
 
@@ -687,9 +687,9 @@ output "{{ output.Name }}" {
 <br><br>
 
 # Contacts and Contributions
-{% if var.Repo %}
+{% if var.repo %}
 
-This project is owned and maintained by [{{var.Config.Repository.Owner|default(var.Repo.owner.login, true)}}]({{ var.Repo.owner.html_url }})
+This project is owned and maintained by [{{var.git.Owner|default(var.repo.repo_owner, true)}}]({{ var.repo.repo_owner_url }})
 
 <br>
 {% endif %}
