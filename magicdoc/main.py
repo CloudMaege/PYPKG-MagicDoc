@@ -13,54 +13,58 @@
 ###############
 # Import Pip Installed Modules:
 import click
-from termcolor import colored, cprint
 
 # Import Base Python Modules
-from datetime import datetime
-import logging, os
+import os, sys
 
-# Import MagicDoc sub commands
-from magicdoc.magicdoc_show import commands as show_commands
-from magicdoc.magicdoc_gen import commands as gen_commands
+# Set the Click Context for Environment Variable Name Generation
+CONTEXT_SETTINGS = dict(auto_envvar_prefix='MAGICDOC')
+# Set the location where the CLI should look for all of the subcommands and templates.
+COMMANDS = os.path.abspath(os.path.join(os.path.dirname(__file__), 'commands'))
 
-# Instantiate Logger
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-logging.basicConfig(filename='logs/magicdoc.log', filemode='w', format='%(asctime)-15s-%(levelname)s:    %(message)s', level=logging.DEBUG)
-log = logging.getLogger('magicdoc')
+# Click Dynamic Command Loader Class
+class MagicDocCLI(click.MultiCommand):
+    """ Custom Command Loader Class"""
 
+    def list_commands(self, ctx):
+        """
+        Look in the COMMANDS location and gather all command python files
+        - Verify that any files in the CMD_FOLDER location end with .py
+        - Append each found file to the command list excluding .py extention.
+        """
+        rv = []
+        for filename in os.listdir(COMMANDS): 
+            if filename.endswith('.py'):
+                if filename.endswith('.py') and not filename.startswith('__init__'):
+                    rv.append(filename[:-3])
+            # if filename.endswith('.py') and filename.startswith('cmd_'):
+                # rv.append(filename[4:-3])
+        rv.sort()
+        return rv
 
-##################
-# MagicDoc Main: #
-##################
-@click.group()
-# Pass provider:
-@click.option(
-    '--provider', '-p', show_envvar=True,
-    type=click.Choice(['tf', 'terraform']),
-    help="Specify the code provider that will be used. If the project is constructed in Terraform use terraform, or tf, if CloudFormation, use cloudformation or cf, etc..."
-)
-
-# Pass directory path to search for all commands:
-@click.option(
-    '--directory', '-d', show_envvar=True,
-    type=click.Path(exists=True, file_okay=True, dir_okay=True, readable=True),
-    default=None,
-    help="The directory path location to the target directory containing the project files that the command will be ran against. This setting is optional allowing the directory be set via an associated environment variable."
-)
-
-# Pass object context
+    def get_command(self, ctx, name):
+        """
+        Go through each of the py files in the command directory and import them to the cli.
+        This model allows for each subcommand to be its own file keeping code organized, and modular.
+        """
+        try:
+            ns = {}
+            fn = os.path.join(COMMANDS, "{}.py".format(name))
+            with open(fn) as f:
+                code = compile(f.read(), fn, 'exec')
+                eval(code, ns, ns)
+            return ns['cli']
+            # imbue = __import__('magicdoc.commands.cmd_' + name, None, None, ['cli'])
+            # return imbue.cli
+        except ImportError:
+            return
+        
+@click.command(cls=MagicDocCLI, context_settings=CONTEXT_SETTINGS)
+@click.version_option()
 @click.pass_context
-
-# Entry Point Function:
-def main(ctx, provider: str, directory: str):
-    ctx.obj.update(provider=provider, directory=directory)
-
-
-# Add Subcommand groups to main command entry point.
-main.add_command(show_commands.show)
-main.add_command(gen_commands.gen)
-
+def cli(ctx):
+    """CloudMage: MagicDoc Project Documentation Utility"""
+    pass
 
 if __name__ == '__main__':
-    main(auto_envvar_prefix="MAGICDOC", obj={})
+    cli()

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "MagicDoc"
-version = "0.0.3"
+version = "0.0.10"
 description = "MagicDoc is a Python command line tool/library that is designed to provide an extremely simple way to automatically create detailed documentation for certain project types."
 license = "GPL-3.0-or-later"
 authors = ["Rich Nason <rnason@cloudmage.io>"]
@@ -13,19 +13,20 @@ homepage = "https://github.com/TheCloudMage/PyPkgs-MagicDoc"
 [tool.poetry.dependencies]
 python = "^3.6"
 jinja2 = "^2.11.1"
-termcolor = "^1.1.0"
 PyYaml = "^5.3"
 requests = "^2.22.0"
 python-terraform = "^0.10.1"
 pyhcl = "^0.4.0"
 graphviz = "^0.13.2"
 click = "^7.0"
+colorama = "^0.4.3"
+click-log = "^0.3.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
 
 [tool.poetry.scripts]
-magicdoc = 'magicdoc:main'
+magicdoc = 'magicdoc.main:cli'
 
 [tool.poetry.urls]
 "Releases" = "https://github.com/TheCloudMage/PyPkgs-MagicDoc/releases"
