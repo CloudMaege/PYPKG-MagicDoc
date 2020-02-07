@@ -46,17 +46,6 @@ version = "7.0"
 
 [[package]]
 category = "main"
-description = "Logging integration for Click"
-name = "click-log"
-optional = false
-python-versions = "*"
-version = "0.3.2"
-
-[package.dependencies]
-click = "*"
-
-[[package]]
-category = "main"
 description = "Cross-platform colored terminal text."
 name = "colorama"
 optional = false
@@ -292,7 +281,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "50cc18afdcf18d4939a33ab8dafde3840359de38a4c6264ed3b44709fe5d4292"
+content-hash = "3358c42c459ca301d0f5b0434614540f61e60953e7c2b19f3b9af25581fba334"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -315,10 +304,6 @@ chardet = [
 click = [
     {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
     {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
-]
-click-log = [
-    {file = "click-log-0.3.2.tar.gz", hash = "sha256:16fd1ca3fc6b16c98cea63acf1ab474ea8e676849dc669d86afafb0ed7003124"},
-    {file = "click_log-0.3.2-py2.py3-none-any.whl", hash = "sha256:eee14dc37cdf3072158570f00406572f9e03e414accdccfccd4c538df9ae322c"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},

@@ -56,7 +56,7 @@ class MagicDocCLI(click.MultiCommand):
             return ns['cli']
             # imbue = __import__('magicdoc.commands.cmd_' + name, None, None, ['cli'])
             # return imbue.cli
-        except ImportError:
+        except Exception:
             return
         
 @click.command(cls=MagicDocCLI, context_settings=CONTEXT_SETTINGS)

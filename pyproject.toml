@@ -20,7 +20,6 @@ pyhcl = "^0.4.0"
 graphviz = "^0.13.2"
 click = "^7.0"
 colorama = "^0.4.3"
-click-log = "^0.3.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"

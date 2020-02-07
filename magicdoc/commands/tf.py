@@ -13,19 +13,59 @@
 ###############
 # Import Pip Installed Modules:
 import click
-import click_log
 
 # Import Base Python Modules
 import os, sys, json
 
 # MagicDoc Imports
-from magicdoc.classes.terraform import TFDoc
+from magicdoc.classes.terraform import TFMagicDoc
 
 # Set the Module Path for the Templates directory
 CTX_TEMPLATE_DIR = COMMANDS = os.path.abspath(os.path.join(os.getcwd(), 'templates'))
 
 # CLI Environment Class
 class Environment(object):
+    """Magic Doc Environment Class"""
+    class Log():
+            """CLI Log class to allow easy logging throughout the application"""
+
+            def __init__(self, verbose):
+                self.verbose = verbose
+
+            def write(self, msg, termcolor='green'):
+                """Log method to print to output to the shell"""
+                # Set termcolor if message type was specified
+                termcolor = "red" if termcolor.lower() == "error" else termcolor
+                termcolor = "orange" if termcolor.lower() == "warning" else termcolor
+                termcolor = "blue" if termcolor.lower() == "info" else termcolor
+                termcolor = "yellow" if termcolor.lower() == "debug" else termcolor
+                click.echo()
+                click.secho(msg, file=sys.stderr, fg=termcolor)
+                click.echo()
+
+            def debug(self, msg):
+                """Print a debug message to the shell"""
+                offset = 3
+                if self.verbose:
+                    click.secho("{}:{}{}".format("DEBUG", " " * offset, msg), file=sys.stderr, fg='yellow')
+
+            def info(self, msg):
+                """Print a info message to the shell"""
+                offset = 4
+                if self.verbose:
+                    click.secho("{}:{}{}".format("INFO", " " * offset, msg), file=sys.stderr, fg='cyan')
+
+            def warning(self, msg):
+                """Print a warning message to the shell"""
+                offset = 1
+                if self.verbose:
+                    click.secho("{}:{}{}".format("WARNING", " " * offset, msg), file=sys.stderr, fg='bright_red')
+
+            def error(self, msg):
+                """Print a error message to the shell"""
+                offset = 3
+                click.secho("{}:{}{}".format("ERROR", " " * offset, msg), file=sys.stderr, fg='red')
+
     def __init__(self):
         self.verbose = False
         self.no_recursion = False
@@ -36,28 +76,19 @@ class Environment(object):
         self.changelog_template = 'changelog.j2'
         self.gitignore_template = 'gitignore.j2'
         self.project_config = {}
-        self.tf = {}
+        self.tf = None
         self.terminal_colors = [
             'black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black',
             'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta',
             'bright_cyan', 'bright_white'
         ]
+        self.log = self.Log(self.verbose)
 
-    def log(self, msg, *args):
-        """Logs messages to STDERR"""
-        if args:
-            msg %= args
-        click.echo(msg, file=sys.stderr)
-    
-    def vlog(self, msg, *args):
-        """Logs messages to STDERR ONLY if verbose mode is enabled"""
-        if self.verbose:
-            self.log(msg, *args)
 
 # Create Environment Class decorator to apply the Environment Class to each sub command
 pass_environment = click.make_pass_decorator(Environment, ensure=True)
 
-@click.group(invoke_without_command=True)
+@click.group()
 @click.option(
     '--verbose', '-v', is_flag=True, show_envvar=True,
     help='Enables verbose mode.'
@@ -76,26 +107,27 @@ def cli(ctx, verbose, directory, no_recursion):
     """Terraform based project commands and utilities"""
     # Set the default template directory.
     ctx.template_dir = CTX_TEMPLATE_DIR
-    
+
     # If user specified verbose settings set it, or pull from environment context.
     ctx.verbose = verbose
-    
+    ctx.log.verbose = verbose
+
     # If user specified workdir settings set it, or pull from environment context.
     if directory is not None:
         ctx.workdir = directory
-    
+
     # If user specified verbose settings set it, or pull from environment context.
     ctx.no_recursion = no_recursion
 
     # Create a Terraform project object.
-    ctx_tf = TFDoc(ctx.workdir, ctx.no_recursion)
-    ctx.tf.update(
-        files=ctx_tf.tf_file_list,
-        tfvar_files=ctx_tf.tfvars_file_list,
-        variables=ctx_tf.tf_variables,
-        outputs=ctx_tf.tf_outputs,
-        graph={'graph_file': ctx_tf.tf_graph, 'graph_image': ctx_tf.tf_graph_image}
-    )
+    ctx.tf = TFMagicDoc(ctx.log, ctx.workdir, ctx.no_recursion)
+    # ctx.tf.update(
+    #     files=ctx_tf.tf_file_list,
+    #     tfvar_files=ctx_tf.tfvars_file_list,
+    #     variables=ctx_tf.tf_variables,
+    #     outputs=ctx_tf.tf_outputs,
+    #     graph={'graph_file': ctx_tf.tf_graph, 'graph_image': ctx_tf.tf_graph_image}
+    # )
     pass
 
 @cli.command()
@@ -111,8 +143,8 @@ def env(ctx):
     
     click.clear()
     click.echo()
-    click.secho("MagicDoc TF Command Environment:")
-    click.secho("--------------------------------\n")
+    click.secho("MagicDoc TF Command Environment:", fg='green')
+    click.echo()
 
     click.secho("Verbose Mode:              ", fg='blue', nl=False)
     click.secho(ctx_verbose, fg='green')
@@ -139,18 +171,18 @@ def env(ctx):
 def files(ctx):
     """Print Terraform Project Variables"""
     try:
-        click.echo(json.dumps(ctx.obj.tf, indent=4, sort_keys=True))
-        click.secho("{} terraform files found in target directory: {}".format(len(ctx.obj.tf.get('files')), ctx.obj.workdir), fg='green')
+        click.echo()
+        click.echo(dir(ctx.obj.tf))
+        click.echo()
+        click.echo(json.dumps(ctx.obj.tf.files, indent=4, sort_keys=True))
+        click.secho("{} terraform files found in target directory: {}".format(len(ctx.obj.tf.files), ctx.obj.workdir), fg='green')
     except Exception as e:
         ctx.obj.log("Failed to print terraform project files: {}".format(e))
 
 
-@cli.command()
-def update():
-    click.echo('update is invoked in command1.')
-
-
-
+# @cli.command()
+# def update():
+#     click.echo('update is invoked in command1.')
 
 
 # @cli.command()
@@ -210,5 +242,5 @@ def update():
 # # @pass_environment
 # # def cli(ctx):
 # #     """Shows file changes in the current working directory."""
-# #     ctx.log('Changed files: none')
-# #     ctx.vlog('bla bla bla, debug info')
+#     ctx.log('Changed files: none')
+#     ctx.vlog('bla bla bla, debug info')
