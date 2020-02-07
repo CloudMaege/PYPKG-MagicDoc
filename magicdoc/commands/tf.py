@@ -15,7 +15,7 @@
 import click
 
 # Import Base Python Modules
-import os, sys, json
+import os, sys, json, ntpath
 
 # MagicDoc Imports
 from magicdoc.classes.terraform import TFMagicDoc
@@ -32,6 +32,10 @@ class Environment(object):
             def __init__(self, verbose):
                 self.verbose = verbose
 
+            def clear(self):
+                """Log method that will perform a screen clear when called"""
+                click.clear()
+            
             def write(self, msg, termcolor='green'):
                 """Log method to print to output to the shell"""
                 # Set termcolor if message type was specified
@@ -65,6 +69,7 @@ class Environment(object):
                 """Print a error message to the shell"""
                 offset = 3
                 click.secho("{}:{}{}".format("ERROR", " " * offset, msg), file=sys.stderr, fg='red')
+
 
     def __init__(self):
         self.verbose = False
@@ -121,13 +126,6 @@ def cli(ctx, verbose, directory, no_recursion):
 
     # Create a Terraform project object.
     ctx.tf = TFMagicDoc(ctx.log, ctx.workdir, ctx.no_recursion)
-    # ctx.tf.update(
-    #     files=ctx_tf.tf_file_list,
-    #     tfvar_files=ctx_tf.tfvars_file_list,
-    #     variables=ctx_tf.tf_variables,
-    #     outputs=ctx_tf.tf_outputs,
-    #     graph={'graph_file': ctx_tf.tf_graph, 'graph_image': ctx_tf.tf_graph_image}
-    # )
     pass
 
 @cli.command()
@@ -135,16 +133,17 @@ def cli(ctx, verbose, directory, no_recursion):
 def env(ctx):
     """Print Information about the tf subcommand environment"""
     
+    # Assign context objects
+    log = ctx.obj.log
+
     # Set Yes/No values if the project_config and tf dictionaries are populated/empty
     ctx_verbose = "On" if ctx.obj.verbose else "Off"
     ctx_no_recursion = "No" if ctx.obj.no_recursion else "Yes"
     ctx_project_config = "Yes" if bool(ctx.obj.project_config) else "No"
     ctx_tf = "Yes" if bool(ctx.obj.tf) else "No"
-    
+
     click.clear()
-    click.echo()
-    click.secho("MagicDoc TF Command Environment:", fg='green')
-    click.echo()
+    log.write("MagicDoc TF Command Environment:")
 
     click.secho("Verbose Mode:              ", fg='blue', nl=False)
     click.secho(ctx_verbose, fg='green')
@@ -171,13 +170,49 @@ def env(ctx):
 def files(ctx):
     """Print Terraform Project Variables"""
     try:
+        # Assign context objects
+        log = ctx.obj.log
+        files = ctx.obj.tf.files
+
+        click.clear()
+        log.write("MagicDoc TF File Summary:")
+
+        log.info("Invoking command magicdoc tf files.")
+        log.debug("Working with returned file object:")
+        log.debug(json.dumps(files, indent=4, sort_keys=True))
+        log.debug(' ')
+        click.secho("{} terraform file(s) found in target directory: {}".format(len(files.get('list_tf_files')), ctx.obj.workdir), fg='cyan')
+        click.secho("{} tfvar file(s) found in target directory: {}".format(len(files.get('list_tfvar_files')), ctx.obj.workdir), fg='cyan')
         click.echo()
-        click.echo(dir(ctx.obj.tf))
+
+        # List TF Files:
+        click.secho("Terraform .tf files:", fg='green')
+        for filename in files.get('list_tf_files'):
+            file_path, file_name = ntpath.split(filename)
+            file_path = file_path.replace("/", "")
+            log.debug("Using file path: {}".format(str(file_path)))
+            log.debug("Using file name: {}".format(str(file_name)))
+            if file_path != "":
+                click.secho("{}/".format(file_path), fg='blue', nl=False)
+            click.secho(file_name, fg='white')
+        log.debug("Listing .tf file results completed!")
         click.echo()
-        click.echo(json.dumps(ctx.obj.tf.files, indent=4, sort_keys=True))
-        click.secho("{} terraform files found in target directory: {}".format(len(ctx.obj.tf.files), ctx.obj.workdir), fg='green')
+
+        # List TFVar Files:
+        click.secho("Terraform .tfvar files:", fg='green')
+        for filename in files.get('list_tfvar_files'):
+            file_path, file_name = ntpath.split(filename)
+            file_path = file_path.replace("/", "")
+            log.debug("Using file path: {}".format(str(file_path)))
+            log.debug("Using file name: {}".format(str(file_name)))
+            if file_path != "":
+                click.secho("{}/".format(file_path), fg='blue', nl=False)
+            click.secho(file_name, fg='white')
+        log.debug("Listing .tf file results completed!")
+        click.echo()
     except Exception as e:
-        ctx.obj.log("Failed to print terraform project files: {}".format(e))
+        log.error("Failed to print terraform project files!")
+        log.error("Exception: {}".format(str(e)))
 
 
 # @cli.command()

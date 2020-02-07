@@ -106,7 +106,9 @@ class TFMagicDoc(object):
                 self._log.debug("{}: Saving file search results to object".format(self._logtitle))
                 self._files = file_search_results
         except Exception as e:
-            self._log.error("Search for [*.tf, *.tfvar] files in {} failed with exception: {}".format(self._path, str(e)))
+            self._log.error("Search for [*.tf, *.tfvar] files in {} failed!".format(self._path))
+            self._log.error("Exception: {}".format(str(e)))
+            sys.exit()
 
 
     # ################################################
