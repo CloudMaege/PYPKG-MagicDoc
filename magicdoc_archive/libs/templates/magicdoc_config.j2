@@ -1,73 +1,95 @@
 #############################
+# MagicDoc Configuration: #
+#############################
+MagicDoc:
+    ProjectDirRecursion: {{ magicdoc.recursion }}
+    ExcludeDirectory: {{ magicdoc.exclude_dir }}
+    IncludeExampleDirectory: {{ magicdoc.include_examples }}
+    TemplateDirectory: {{ magicdoc.template_dir }}
+    ReadMeTemplate: {{ magicdoc.readme_template }}
+    ChangeLogTemplate: {{ magicdoc.changelog_template }}
+    GitIgnoreTemplate: {{ magicdoc.gitignore_template }}
+
+#############################
 # Repository Configuration: #
 #############################
-GitConfig:
-    OwnerOverride:
-    NameSpace:
-    Name:
-    Version:
+Git:
+    Repository: {{ git.repository }}
+    Version: {{ git.version }}
 
 ############################
 # README.md Configuration: #
 ############################
-ReadMeConfig:
-    Title: 
-    HeroImage:
-    DocLink:
-    #=====================#
-    # README.md Sections: #
-    #=====================#
+ReadMe:
+    Title: {{ readme.title }}
+    HeroImage: {{ readme.hero }}
+    DocLink: {{ readme.documentation_link }}
     GettingStarted: >-
-        Project Description.....
+        {{ readme.getting_started }}
     PreRequisites: >-
-        This module does not currently have any pre-requisites or dependency requirements.
+        {{ readme.pre_requisites }}
     Usage:
-        ExampleResourceName:
+        {{ readme.examle_module_name }}
+    Changelog:
+        {{ readme.changelog }}
+    Contact:
+        UserName: {{ git.username }}
+        Email: {{ git.email }}
+
 ############################
 # Variables Configuration: #
 ############################
-VariablesConfig:
-    #=====================#
+Variables:
+    #######################
     # Required Variables: #
-    #=====================#
+    #######################
     Required:
-        Image:
+        Image:  {{ var.required_image }}
         {% for variable in var.required_vars %}
-        {{variable.Name}}:
-            ExampleValue:
+        {{variable.name}}:
+            ExampleValue: {{ variable.example_value }}
             GeneralDetails:
                 Description: >-
-                    {{variable.Description}}
-                Note:
-                Image:
+                    {{variable.description}}
+                Notes:
+                Images:
             VarDetails:
                 Description:
-                Note:
-                Image:
+                Notes:
+                Images:
             UsageDetails:
                 Description:
-                Note:
-                Image:
+                Notes:
+                Images:
+            Additional:
+                Description:
+                Notes:
+                Images:
         {% endfor %}
-    #=====================#
+    #######################
     # Optional Variables: #
-    #=====================#
+    #######################
     Optional:
-        Image:
+        Image: {{ var.optional_image }}
         {% for variable in var.optional_vars %}
-        {{variable.Name}}:
-            ExampleValue:
+        {{variable.name}}:
+            ExampleValue: {{ variable.example_value }}
+            DefaultValue: {{ variable.default }}
             GeneralDetails:
                 Description: >-
                     {{variable.Description}}
-                Note:
-                Image:
+                Notes:
+                Images:
             VarDetails:
                 Description:
-                Note:
-                Image:
+                Notes:
+                Images:
             UsageDetails:
                 Description:
-                Note:
-                Image:
+                Notes:
+                Images:
+            Additional:
+                Description:
+                Notes:
+                Images:
         {% endfor %}

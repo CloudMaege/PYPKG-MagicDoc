@@ -25,23 +25,28 @@ import os, sys, shutil, json
 class TFMagicDoc(object):
     """MagicDoc Terraform Documentation Class"""
 
-    def __init__(self, log, path, exclude_dir=None, no_recursion=False):
+    def __init__(self, log, path, exclude_dir=None, config=None, no_recursion=False):
         '''TFMagicDoc Class Constructor'''
 
         # Set class instantiation variables
         self._log = log
         self._path = path
         self._exclude_dir = exclude_dir
+        self._config_file = config
+        self._config = {}
         self._no_recursion = no_recursion
         self._logtitle = "TFMagicDoc"
 
         # Set properties to hold result sets.
         self._files = {}
         self._variables = {}
+
         # self.outputs = None
         # self.graph = None
 
         # Set object files property setter by calling itself and passing a value.
+        if self._config_file is not None and self._config_file.endswith(('.yaml', '.yml')) and os.path.exists(os.path.join(self._path, self._config_file)):
+            self.config = True
         self.files = True
 
         # Terraform output collection var
@@ -50,6 +55,57 @@ class TFMagicDoc(object):
         # Terraform graph var
         # self.tf_graph = None
         # self.tf_graph_image = None
+
+
+    ############################################
+    # Load Project Documentation Config File:  #
+    ############################################
+    @property
+    def config(self):
+        """Getter for class property config method. This object property will return the project config.yaml file from the workdir if found. This config holds additional details used in building the documentation."""
+        self._log.info("{}: {}.config property requested".format(self._logtitle, self._logtitle))
+        if self._config is not None and isinstance(self._config, dict) and bool(self._config):
+            return self._config
+        else:
+            self._log.write("MagicDoc config file not found in {}".format(self._path), 'yellow')
+            self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+
+
+    @config.setter
+    def config(self, init=False):
+        """Setter for class property config method that will capture the provided config file, parse it, and construct the config dictionary object."""
+        if self._config_file is not None and init:
+            # Instantiate the results object to hold the parsed config file.
+            self._log.info("{}: {}.config load requested".format(self._logtitle, self._logtitle))
+            self._log.info("{}: Config file: {}".format(self._logtitle, str(os.path.join(self._path, self._config_file))))
+            try:
+                if os.path.exists(os.path.join(self._path, self._config_file)):
+                    self._log.debug("{}: Config file: {} found in project directory! Attempting to load:".format(self._logtitle, self._config_file))
+                    if self._config_file.endswith(('.yaml', '.yml')):
+                        self._log.debug("{}: Config file {} passed file type check. File extention match: [*.yaml, *.yml], Processing file".format(self._logtitle, self._config_file))
+                        self._log.write("Loading terraform project config file: {}".format(os.path.join(self._path, self._config_file)))
+                        # Attempt to open the file, err on exception
+                        with open(os.path.join(self._path, self._config_file)) as f:
+                            self._config = yaml.load(f, Loader=yaml.FullLoader)
+                        self._log.info("{}: Config file loaded successfully from given file path: {}.".format(self._logtitle, os.path.join(self._config_file, self._path)))
+                        self._log.debug(json.dumps(self._config, indent=4, sort_keys=True))
+                    else:
+                        self._log.error("File: {} does not appear to have the required .yaml or .yml extention.".format(self._config_file))
+                        self._log.error("The requested operation will continue, however config data will not be un-available.")
+                        self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+                        pass
+                else:
+                    self._log.error("File: {} does not exist in the project directory: {}".format(self._config_file, self._path))
+                    self._log.error("The requested operation will continue, however config data will not be un-available.")
+                    self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+                    pass
+            except Exception as e:
+                self._log.error("Request to load project config file in {} failed!".format(self._path))
+                self._log.error("Exception: {}".format(str(e)))
+                self._log.error("The requested operation will continue, however config data will not be un-available.")
+                self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+                pass
+        self._log.debug("{}: Config file not found in project directory or is of invalid type: {}".format(self._logtitle, self._config_file))
 
 
     ############################################
@@ -188,7 +244,11 @@ class TFMagicDoc(object):
                                     'name': k,
                                     'type': v.get('type', 'string'),
                                     'description': v.get('description', "No Description Provided"),
-                                    'example_value': "Required Value"
+                                    'example_value': "Required Value",
+                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': [], 'images':[]},
+                                    'variable_details': {'description': "", 'notes': [], 'images':[]},
+                                    'usage_details': {'description': "", 'notes': [], 'images':[]},
+                                    'additional': {'description': "", 'notes': [], 'images':[]}
                                 })
                                 self._log.debug("{}: Adding {} to required_vars list.".format(self._logtitle, k))
                             # If the variable has a default value, then it must be an optional.
@@ -203,7 +263,11 @@ class TFMagicDoc(object):
                                     'name': k,
                                     'type': v.get('type', 'string'),
                                     'description': v.get('description', "No Description Provided"),
-                                    'default': v.get('default', "Example Value")
+                                    'default': v.get('default', "Example Value"),
+                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': [], 'images':[]},
+                                    'variable_details': {'description': "", 'notes': [], 'images':[]},
+                                    'usage_details': {'description': "", 'notes': [], 'images':[]},
+                                    'additional': {'description': "", 'notes': [], 'images':[]}
                                 })
                                 self._log.debug("{}: Adding {} to optional_vars list.".format(self._logtitle, k))
             # If no results were found then don't set the variables property attribute.
