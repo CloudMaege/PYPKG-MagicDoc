@@ -126,7 +126,7 @@ class TFMagicDoc(object):
 
     @files.setter
     def files(self, init=True):
-        """Setter for class property files method that iterates through a given file path and collects a list of terraform files."""
+        """Setter for class property files method that iterates through a given file path and collects a list of terraform files. This method will also ignore files that start with .terraform."""
         # Instantiate the results object to hold the file search results.
         self._log.info("{}: {}.files refresh requested".format(self._logtitle, self._logtitle))
         self._log.info("{}: Exclude all sub-directories from search: {}".format(self._logtitle, str(self._no_recursion)))
@@ -142,13 +142,13 @@ class TFMagicDoc(object):
                 self._log.debug("{}: Setting file search path: {}".format(self._logtitle, file_search_path))
                 for filename in files:
                     self._log.debug("{}: Checking file: {}".format(self._logtitle, filename))
-                    if filename.endswith('.tf'):
+                    if filename.endswith('.tf') and not filename.startswith('.terraform'):
                         if self._exclude_dir is not None and self._exclude_dir in filename:
                             self._log.debug("{}: Terraform .tf file: {} located in excluded subdirectory {}. [Skipping...]: {}".format(self._logtitle, filename, self._exclude_dir))
                             continue
                         self._log.debug("{}: Terraform .tf file match found: {}".format(self._logtitle, filename))
                         file_search_results.get('list_tf_files').append(os.path.join(file_search_path, filename))
-                    elif filename.endswith('.tfvars'):
+                    elif filename.endswith('.tfvars') and not filename.startswith('.terraform'):
                         self._log.debug("{}: Terraform .tfvar file match found: {}".format(self._logtitle, filename))
                         file_search_results.get('list_tfvar_files').append(os.path.join(file_search_path, filename))
                 # If recursion is set to false, then break, as the first pass gathers only the current directory.

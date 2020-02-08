@@ -17,6 +17,9 @@ import click
 # Import Base Python Modules
 import os, sys, json, ntpath
 
+# Import MagicDoc Classes/Modules
+from magicdoc.modules.tree import DirTree
+
 
 ##############################
 # Define TF Show Group
@@ -232,6 +235,37 @@ def outputs(ctx, include_examples):
         click.echo()
     except Exception as e:
         log.error("MagicDoc failed to parse the terraform project outputs object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
+        log.error("Exception: {}".format(str(e)))
+        click.echo()
+        sys.exit()
+
+
+###############################
+# TF Tree CMD:
+# CMD: magicdoc tf show tree
+################################
+@show.command()
+@click.pass_context
+def tree(ctx):
+    """Display Terraform Project Directory Tree"""
+    try:
+        # Assign context objects
+        log = ctx.obj.log
+
+        if not ctx.obj.verbose:
+            click.clear()
+        log.header("MagicDoc TF Project Tree:")
+
+        log.info("Invoking command magicdoc tf tree.")
+        log.debug("Call tree constructor module...")
+        # Call the tree module to construct the tree variable used for output.
+        
+        dir_tree = DirTree(ctx.obj.log, ctx.obj.workdir)
+        log.debug("Directory tree render completed!")
+        click.secho(dir_tree, fg='blue')
+        click.echo()
+    except Exception as e:
+        log.error("MagicDoc failed to render directory tree structure! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
         log.error("Exception: {}".format(str(e)))
         click.echo()
         sys.exit()
