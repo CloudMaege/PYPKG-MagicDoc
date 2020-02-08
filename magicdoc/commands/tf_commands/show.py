@@ -83,13 +83,16 @@ def files(ctx):
         log.debug("Listing .tf file results completed!")
         click.echo()
     except Exception as e:
-        log.error("MagicDoc failed to parse the terraform project files output! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
+        log.error("MagicDoc failed to parse the terraform project files object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
         log.error("Exception: {}".format(str(e)))
         click.echo()
         sys.exit()
 
 
-# Command: tf variables
+##################################
+# TF Variables CMD:
+# CMD: magicdoc tf show variables
+##################################
 @show.command()
 @click.option(
     '--include_examples', '-i', is_flag=False, show_envvar=True,
@@ -111,11 +114,11 @@ def variables(ctx, include_examples: bool):
         log.header("MagicDoc TF Variable Summary:")
 
         log.info("Invoking command magicdoc tf variables.")
-        log.info("Working with returned file object:")
+        log.info("Working with returned variables object:")
         log.debug(json.dumps(variables, indent=4, sort_keys=True))
         log.debug(' ')
-        click.secho("{} required terraform project variables found in target directory: {}".format(len(variables.get('required_vars', [])), ctx.obj.workdir), fg='bright_black')
-        click.secho("{} optional terraform project variables found in target directory: {}".format(len(variables.get('optional_vars', [])), ctx.obj.workdir), fg='bright_black')
+        click.secho("{} required terraform project variables found in target project: {}".format(len(variables.get('required_vars', [])), ctx.obj.workdir), fg='bright_black')
+        click.secho("{} optional terraform project variables found in target project: {}".format(len(variables.get('optional_vars', [])), ctx.obj.workdir), fg='bright_black')
         click.echo()
 
         # List TF Required Variables:
@@ -175,7 +178,60 @@ def variables(ctx, include_examples: bool):
         log.debug("Listing optional variable results completed!")
         click.echo()
     except Exception as e:
-        log.error("MagicDoc failed to parse the terraform project variables output! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
+        log.error("MagicDoc failed to parse the terraform project variables object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
+        log.error("Exception: {}".format(str(e)))
+        click.echo()
+        sys.exit()
+
+
+###############################
+# TF Outputs CMD:
+# CMD: magicdoc tf show outputs
+################################
+@show.command()
+@click.option(
+    '--include_examples', '-i', is_flag=False, show_envvar=True,
+    help='Include all subdirectories including example(s)'
+)
+@click.pass_context
+def outputs(ctx, include_examples):
+    """Display Terraform Project Outputs"""
+    try:
+        # Assign context objects
+        log = ctx.obj.log
+        # Trigger the property setter to populate the outputs object, then assign it for usage.
+        ctx.obj.tf.outputs = include_examples
+        outputs = ctx.obj.tf.outputs
+
+        if not ctx.obj.verbose:
+            click.clear()
+        log.header("MagicDoc TF Output Summary:")
+
+        log.info("Invoking command magicdoc tf outputs.")
+        log.info("Working with returned outputs list:")
+        log.debug(outputs)
+        log.debug(' ')
+        click.secho("{} terraform project outputs found in target project: {}".format(len(outputs), ctx.obj.workdir), fg='bright_black')
+        click.echo()
+
+        # List TF Outputs:
+        outputs_maxlength = 0
+        # Check length of output name, if longer then current value replace. This variable will be used for alignment offset.
+        for output in outputs:
+            outputs_maxlength = len(output.get('name')) if len(output.get('name')) > outputs_maxlength else outputs_maxlength
+            log.debug("Output maxlength offset value set to {}".format(outputs_maxlength))
+        
+        # Iterate back through the output list, and print all the things.
+        for output in outputs:
+            output_offset = outputs_maxlength - len(output.get('name'))
+            click.secho("{}{} = {{".format(output.get('name', ""), " " * output_offset), fg='blue')
+            click.secho("{}{}".format(" " * 4, output.get('value', 'resource.name.arn')), fg='green')
+            click.secho("}", fg='blue')
+            click.echo()
+        log.debug("Listing output results completed!")
+        click.echo()
+    except Exception as e:
+        log.error("MagicDoc failed to parse the terraform project outputs object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
         log.error("Exception: {}".format(str(e)))
         click.echo()
         sys.exit()

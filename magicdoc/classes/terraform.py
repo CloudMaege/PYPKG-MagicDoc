@@ -40,8 +40,7 @@ class TFMagicDoc(object):
         # Set properties to hold result sets.
         self._files = {}
         self._variables = {}
-
-        # self.outputs = None
+        self._outputs = []
         # self.graph = None
 
         # Set object files property setter by calling itself and passing a value.
@@ -85,10 +84,14 @@ class TFMagicDoc(object):
                         self._log.debug("{}: Config file {} passed file type check. File extention match: [*.yaml, *.yml], Processing file".format(self._logtitle, self._config_file))
                         self._log.write("Loading terraform project config file: {}".format(os.path.join(self._path, self._config_file)))
                         # Attempt to open the file, err on exception
-                        with open(os.path.join(self._path, self._config_file)) as f:
-                            self._config = yaml.load(f, Loader=yaml.FullLoader)
-                        self._log.info("{}: Config file loaded successfully from given file path: {}.".format(self._logtitle, os.path.join(self._config_file, self._path)))
-                        self._log.debug(json.dumps(self._config, indent=4, sort_keys=True))
+                        try:
+                            with open(os.path.join(self._path, self._config_file)) as f:
+                                self._config = yaml.load(f, Loader=yaml.FullLoader)
+                                self._log.info("{}: Config file loaded successfully from given file path: {}.".format(self._logtitle, os.path.join(self._config_file, self._path)))
+                                self._log.debug(json.dumps(self._config, indent=4, sort_keys=True))
+                        except Exception as e:
+                            self._log.error("Failed to open: [{}]".format(tf_filepath))
+                            self._log.error("Exception: {}".format(str(e)))
                     else:
                         self._log.error("File: {} does not appear to have the required .yaml or .yml extention.".format(self._config_file))
                         self._log.error("The requested operation will continue, however config data will not be un-available.")
@@ -201,8 +204,7 @@ class TFMagicDoc(object):
         variable_results = {'required_vars': [], 'required_vars_maxlength': 0, 'optional_vars': [], 'optional_vars_maxlength': 0}
         try:
             # Iterate through the project files and look for any files named variables.tf, if found, parse the files and construct an object for each variable that will be stored into the class dictionary object.
-            log.info("Parsing terraform variable files.")
-            self._log.debug("{}: Parsing terraform variable files. Ignoring files in 'example(s)' directory".format(self._logtitle))
+            self._log.info("{}: Parsing terraform variable files.".format(self._logtitle))
             for tf_file in self.files.get('list_tf_files'):
                 tf_filepath = os.path.join(self._path, tf_file)
                 tf_filename = tf_file.lower()
@@ -212,7 +214,7 @@ class TFMagicDoc(object):
                     if ('example' in tf_file or 'examples' in tf_file) and not include_examples:
                         self._log.debug("{}: {} located in example subdirectory. [Skipping file parse...]".format(self._logtitle, tf_file))
                         continue
-                    # if a passed directory name was passed and its in the file path then exclude unless include all was passed true.
+                    # if a passed exclude directory name was passed and its in the file path then exclude unless include all was passed true.
                     elif self._exclude_dir is not None and self._exclude_dir in tf_filename:
                         self._log.debug("{}: {} located in excluded directory: {}. [Skipping file parse...]".format(self._logtitle, self._exclude_dir))
                         continue
@@ -286,46 +288,92 @@ class TFMagicDoc(object):
         except Exception as e:
             self._log.error("Terraform project variable parsing operation failed!")
             self._log.error("Exception: {}".format(str(e)))
+            sys.exit()
 
 
-    # ############################################
-    # # Construct Terraform Module Output List:  #
-    # ############################################
-    # def build_outputs(self):
-    #     '''Class method that iterates through the collected terraform files, and locates any outputs.tf files, parses the files, and returns a dict object of the collected file contents
+    ############################################
+    # Construct Terraform Module Output List:  #
+    ############################################
+    @property
+    def outputs(self):
+        """Getter for class property outputs method. This object property will return a dictionary of outputs from the provided file list."""
+        self._log.info("{}: {}.outputs property requested".format(self._logtitle, self._logtitle))
+        if self._outputs is None:
+            self._log.write("Specified project has no outputs or unable to gather outputs from: {}".format(self._path))
+            sys.exit()
+        else:
+            return self._outputs
+
+
+    @outputs.setter
+    def outputs(self, include_examples):
+        """
+        Setter for class property outputs method that iterates through the collected terraform files,
+        locates any outputs.tf files, parses the files, and returns a dict object of the collected file contents.
         
-    #     Files will be ignored if found in a directory named 'example'
-    #     '''
-    #     try:            
-    #         # Iterate through the project files and look for any files named outputs.tf, if found, parse the files and construct an object for each output that will be stored into the class dictionary object.
-    #         log.info("Parsing terraform output files. Ignoring 'example' files")
-    #         for tf_file in self.tf_file_list:
-    #             tf_file = tf_file.lower()
-    #             if 'outputs.tf' in tf_file and 'example' not in tf_file:
-    #                 log.debug("Parsing file: [{}]".format(tf_file))
-    #                 try:
-    #                     with open(tf_file, 'r') as outputs_file:
-    #                         tf_outputs = hcl.load(outputs_file)
-    #                 except:
-    #                     log.error("Unable to open {}".format(tf_file))
-    #                 log.debug("{} parsed successfully.".format(tf_file))
-    #                 log.debug(json.dumps(tf_outputs, indent=4, sort_keys=True))
-    #                 # Parse each output from the outputs.tf file and build a dict that can be sent to the doc template:
-    #                 for k, v in tf_outputs.get('output').items():
-    #                     # Create an output object and add it the self.tf_outputs list object.
-    #                     self.tf_outputs.append({
-    #                         'name': k,
-    #                         'value': v.get('value')
-    #                     })
-    #                     # Log the output
-    #                     log.debug("Added {} to tf_outputs list.".format(k))
-    #         # Log all the things
-    #         log.info("Output list processing completed:")
-    #         log.info("{} outputs collected: {}".format(len(self.tf_outputs), self.tf_outputs))
-    #     except Exception as e:
-    #         log.error("Failed to construct terraform outputs list with exception: {}".format(str(e)))
-    #     finally:
-    #         return self.tf_outputs
+        Files will be ignored if found in a directory named 'example' or 'examples' unless the include_examples flag was set as true.
+        """
+        # Instantiate the results object to hold the outputs search results.
+        self._log.info("{}: {}.outputs refresh requested".format(self._logtitle, self._logtitle))
+        self._log.info("{}: Include example sub-directories in search: {}".format(self._logtitle, str(include_examples)))
+        self._log.write("Scanning project directory for defined module outputs...")
+        self._log.write("")
+
+        # Intantiate outputs results dictionary object.
+        outputs_results = []
+        try:
+            self._log.info("{}: Parsing terraform output files.".format(self._logtitle))
+            for tf_file in self.files.get('list_tf_files'):
+                tf_filepath = os.path.join(self._path, tf_file)
+                tf_filename = tf_file.lower()
+                self._log.debug("{}: Scanning file: [{}]".format(self._logtitle, tf_file))
+                # If example or exampes is in the file path, then exclude unless include all was passed true.
+                if 'outputs.tf' in tf_file:
+                    if ('example' in tf_file or 'examples' in tf_file) and not include_examples:
+                        self._log.debug("{}: {} located in example subdirectory. [Skipping file parse...]".format(self._logtitle, tf_file))
+                        continue
+                    # if a passed exclude directory name was passed and its in the file path then exclude unless include all was passed true.
+                    elif self._exclude_dir is not None and self._exclude_dir in tf_filename:
+                        self._log.debug("{}: {} located in excluded directory: {}. [Skipping file parse...]".format(self._logtitle, self._exclude_dir))
+                        continue
+                    else:
+                        self._log.debug("{}: Parsing file: [{}]".format(self._logtitle, tf_filepath))
+                        try:
+                            with open(tf_filepath, 'r') as f:
+                                tf_outputs = hcl.load(f)
+                                self._log.debug("{}: Successfully loaded file: [{}]".format(self._logtitle, tf_filepath))
+                        except Exception as e:
+                            self._log.error("Failed to open: [{}]".format(tf_filepath))
+                            self._log.error("Exception: {}".format(str(e)))
+                        self._log.debug("{}: {} flagged for parsing!".format(self._logtitle, tf_file))
+                        self._log.debug(json.dumps(tf_outputs, indent=4, sort_keys=True))
+                        # For each output in the outputs.tf file:
+                        self._log.info("{}: Parsing project outputs defined in: {}.".format(self._logtitle, tf_filepath))
+                        # Parse each output and place into the result variable in expected format.
+                        for k, v in tf_outputs.get('output').items():
+                            # Create an output object and add it the self.tf_outputs list object.
+                            self._log.debug("{} Parsing output: {} with value: {}".format(self._logtitle, k, v.get('value', "")))
+                            outputs_results.append({
+                                'name': k,
+                                'value': v.get('value')
+                            })
+                            self._log.debug("{}: Adding {} to outputs list.".format(self._logtitle, k))
+            # If no results were found then don't set the variables property attribute.
+            if not bool(outputs_results) or len(outputs_results) == 0:
+                self._log.info("{}: Search for project output files in {} yielded no results.".format(self._logtitle, tf_filepath))
+            else:
+                # Log and return the result list.
+                self._log.debug(' ')
+                self._log.info("{}: Output list processing completed successfully.".format(self._logtitle))
+                self._log.info("{}: {} Outputs identified".format(self._logtitle, len(outputs_results)))
+                self._log.debug(outputs_results)
+                self._log.debug("{}: Saving output search results to object".format(self._logtitle))
+                self._outputs = outputs_results
+        except Exception as e:
+            self._log.error("Terraform project output parsing operation failed!")
+            self._log.error("Exception: {}".format(str(e)))
+            sys.exit()
+
 
 # TODO:
     ##############################################
