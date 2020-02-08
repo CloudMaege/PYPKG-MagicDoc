@@ -17,7 +17,7 @@ import hcl, yaml, requests
 from graphviz import Source
 
 # Import Base Python Modules
-import os, sys, shutil
+import os, sys, shutil, json
 
 #####################
 # Class Definition: #
@@ -25,29 +25,24 @@ import os, sys, shutil
 class TFMagicDoc(object):
     """MagicDoc Terraform Documentation Class"""
 
-    def __init__(self, log, path, no_recursion=False):
+    def __init__(self, log, path, exclude_dir=None, no_recursion=False):
         '''TFMagicDoc Class Constructor'''
 
         # Set class instantiation variables
         self._log = log
         self._path = path
+        self._exclude_dir = exclude_dir
         self._no_recursion = no_recursion
         self._logtitle = "TFMagicDoc"
 
-        # Set object files property by calling itself and passing a value.
-        self.files = True
-        # self._variables = None
+        # Set properties to hold result sets.
+        self._files = {}
+        self._variables = {}
         # self.outputs = None
         # self.graph = None
-        
-        
-        # Terraform variable collection vars
-        # self.tf_variables = {
-        #     'required_vars': [],
-        #     'optional_vars': [],
-        #     'required_vars_maxlength': 0,
-        #     'optional_vars_maxlength': 0
-        # }
+
+        # Set object files property setter by calling itself and passing a value.
+        self.files = True
 
         # Terraform output collection var
         # self.tf_outputs = []
@@ -71,10 +66,13 @@ class TFMagicDoc(object):
             return self._files
 
     @files.setter
-    def files(self, trigger=True):
+    def files(self, init=True):
         """Setter for class property files method that iterates through a given file path and collects a list of terraform files."""
         # Instantiate the results object to hold the file search results.
         self._log.info("{}: {}.files refresh requested".format(self._logtitle, self._logtitle))
+        self._log.info("{}: Exclude all sub-directories from search: {}".format(self._logtitle, str(self._no_recursion)))
+        self._log.info("{}: Sub-directory to exclude from search: {}".format(self._logtitle, str(self._exclude_dir)))
+        self._log.write("Scanning project directory for terraform .tf and .tfvar files...")
         file_search_results = {'list_tf_files': [], 'list_tfvar_files': []}
         try:
             self._log.debug("{}: Gathering list of all Terraform files ending in [.tf, .tfvars] file extensions from: {}".format(self._logtitle, self._path))
@@ -86,6 +84,9 @@ class TFMagicDoc(object):
                 for filename in files:
                     self._log.debug("{}: Checking file: {}".format(self._logtitle, filename))
                     if filename.endswith('.tf'):
+                        if self._exclude_dir is not None and self._exclude_dir in filename:
+                            self._log.debug("{}: Terraform .tf file: {} located in excluded subdirectory {}. [Skipping...]: {}".format(self._logtitle, filename, self._exclude_dir))
+                            continue
                         self._log.debug("{}: Terraform .tf file match found: {}".format(self._logtitle, filename))
                         file_search_results.get('list_tf_files').append(os.path.join(file_search_path, filename))
                     elif filename.endswith('.tfvars'):
@@ -104,6 +105,7 @@ class TFMagicDoc(object):
                 self._log.info("{}: {} .tf files found: {}".format(self._logtitle, len(file_search_results.get('list_tf_files')), file_search_results.get('list_tf_files')))
                 self._log.info("{} {} .tfvar files found: {}".format(self._logtitle, len(file_search_results.get('list_tfvar_files')), file_search_results.get('list_tfvar_files')))
                 self._log.debug("{}: Saving file search results to object".format(self._logtitle))
+                self._log.debug(json.dumps(file_search_results, indent=4, sort_keys=True))
                 self._files = file_search_results
         except Exception as e:
             self._log.error("Search for [*.tf, *.tfvar] files in {} failed!".format(self._path))
@@ -111,84 +113,115 @@ class TFMagicDoc(object):
             sys.exit()
 
 
-    # ################################################
-    # # Set Required and Optional max length values: #
-    # ################################################
-    # def set_required_maxlength(self, value):
-    #     '''Class method that will simply check to see if the passed value is greater then the currently set required_vars_maxlength. If the passed value is higher, it will update the self.tf_variables key.'''
-    #     try:
-    #         if len(value) > self.tf_variables.get('required_vars_maxlength'):
-    #             self.tf_variables.update(required_vars_maxlength=value)
-    #     except Exception as e:
-    #         log.error("Failed to update required_vars_maxlength with exception: {}".format(str(e)))
+    ##############################################
+    # Construct Terraform Module Variable Lists: #
+    ##############################################
+    @property
+    def variables(self):
+        """Getter for class property variables method. This object property will return a dictionary of variables from the provided file list."""
+        self._log.info("{}: {}.variables property requested".format(self._logtitle, self._logtitle))
+        if self._variables is None:
+            self._log.write("Specified project has no variables or unable to gather variables from: {}".format(self._path))
+            sys.exit()
+        else:
+            return self._variables
 
 
-    # def set_optional_maxlength(self, value):
-    #     '''Class method that will simply check to see if the passed value is greater then the currently set optional_vars_maxlength. If the passed value is higher, it will update the self.tf_variables key.'''
-    #     try:
-    #         if len(value) > self.tf_variables.get('optional_vars_maxlength'):
-    #             self.tf_variables.update(optional_vars_maxlength=value)
-    #     except Exception as e:
-    #         log.error("Failed to update optional_vars_maxlength with exception: {}".format(str(e)))
-
-
-    # ##############################################
-    # # Construct Terraform Module Variable Lists: #
-    # ##############################################
-    # def build_variables(self):
-    #     '''Class method that iterates through the collected terraform files, and locates any variables.tf files, parses the files, and returns a dict object of the collected file contents.
+    @variables.setter
+    def variables(self, include_examples):
+        """
+        Setter for class property variables method that iterates through the collected terraform files,
+        locates any variables.tf files, parses the files, and returns a dict object of the collected file contents.
         
-    #     Files will be ignored if found in a directory named 'example'
-    #     '''
-    #     try:
-    #         # Iterate through the project files and look for any files named variables.tf, if found, parse the files and construct an object for each variable that will be stored into the class dictionary object.
-    #         log.info("Parsing terraform variable files. Ignoring 'example' files")
-    #         for tf_file in self.tf_file_list:
-    #             tf_file = tf_file.lower()
-    #             if 'variables.tf' in tf_file and 'example' not in tf_file:
-    #                 log.debug("Parsing file: [{}]".format(tf_file))
-    #                 try:
-    #                     with open(tf_file, 'r') as variables_file:
-    #                         tf_variables = hcl.load(variables_file)
-    #                 except:
-    #                     log.error("Unable to open {}".format(tf_file))
-    #                 log.debug("{} parsed successfully.".format(tf_file))
-    #                 log.debug(json.dumps(tf_variables, indent=4, sort_keys=True))
-    #                 # For each variable in the variables.tf file:
-    #                 # Put the variable into either the required, or optional respective list based on the existence or absence of a default value.
-    #                 log.debug("Parsing project variables..")
-    #                 for k, v in tf_variables.get('variable').items():
-    #                     if v.get('default') == None:
-    #                         # Check the variable name len and update maxlength, then create and store the variable object.
-    #                         self.set_optional_maxlength(len(k))
-    #                         self.tf_variables.get('required_vars').append({
-    #                             'name': k,
-    #                             'type': v.get('type', 'No Type Defined'),
-    #                             'description': v.get('description', "No Description Provided"),
-    #                             'example_value': "Required Value"
-    #                         })
-    #                         log.debug("Added {} to required_vars list.".format(k))
-    #                     # If the variable has a default value, then it must be an optional.
-    #                     else:
-    #                         # Check the variable name len and update maxlength, then create and store the variable object.
-    #                         self.set_required_maxlength(len(k))
-    #                         self.tf_variables.get('optional_vars').append({
-    #                             'name': k,
-    #                             'type': v.get('type', 'No Type Defined'),
-    #                             'description': v.get('description', "No Description Provided"),
-    #                             'default': v.get('default', "Example Value")
-    #                         })
-    #                         log.debug("Added {} to optional_vars list.".format(k))
-    #         # Log and return the results.
-    #         log.debug("Variable list processing completed:")
-    #         log.debug("{} Required variables collected: {}".format(len(self.tf_variables.get('required_vars')), self.tf_variables.get('required_vars')))
-    #         log.debug("Longest required variable length: {}".format(self.tf_variables.get('required_vars_maxlength')))
-    #         log.debug("{} Optional variables collected: {}".format(len(self.tf_variables.get('optional_vars')), self.tf_variables.get('optional_vars')))
-    #         log.debug("Longest optional variable length: {}".format(self.tf_variables.get('optional_vars_maxlength')))
-    #     except Exception as e:
-    #         log.error("Failed to construct terraform variables list with exception: {}".format(str(e)))
-    #     finally:
-    #         return self.tf_variables
+        Files will be ignored if found in a directory named 'example' or 'examples' unless the include_examples flag was set as true.
+        """
+        # Instantiate the results object to hold the variables search results.
+        self._log.info("{}: {}.variables refresh requested".format(self._logtitle, self._logtitle))
+        self._log.info("{}: Include example sub-directories in search: {}".format(self._logtitle, str(include_examples)))
+        self._log.write("Scanning project directory for defined module variables...")
+        self._log.write("")
+
+        # Intantiate variable results dictionary object.
+        variable_results = {'required_vars': [], 'required_vars_maxlength': 0, 'optional_vars': [], 'optional_vars_maxlength': 0}
+        try:
+            # Iterate through the project files and look for any files named variables.tf, if found, parse the files and construct an object for each variable that will be stored into the class dictionary object.
+            log.info("Parsing terraform variable files.")
+            self._log.debug("{}: Parsing terraform variable files. Ignoring files in 'example(s)' directory".format(self._logtitle))
+            for tf_file in self.files.get('list_tf_files'):
+                tf_filepath = os.path.join(self._path, tf_file)
+                tf_filename = tf_file.lower()
+                self._log.debug("{}: Scanning file: [{}]".format(self._logtitle, tf_file))
+                # If example or exampes is in the file path, then exclude unless include all was passed true.
+                if 'variables.tf' in tf_file:
+                    if ('example' in tf_file or 'examples' in tf_file) and not include_examples:
+                        self._log.debug("{}: {} located in example subdirectory. [Skipping file parse...]".format(self._logtitle, tf_file))
+                        continue
+                    # if a passed directory name was passed and its in the file path then exclude unless include all was passed true.
+                    elif self._exclude_dir is not None and self._exclude_dir in tf_filename:
+                        self._log.debug("{}: {} located in excluded directory: {}. [Skipping file parse...]".format(self._logtitle, self._exclude_dir))
+                        continue
+                    else:
+                        self._log.debug("{}: Parsing file: [{}]".format(self._logtitle, tf_filepath))
+                        try:
+                            with open(tf_filepath, 'r') as f:
+                                tf_variables = hcl.load(f)
+                                self._log.debug("{}: Successfully loaded file: [{}]".format(self._logtitle, tf_filepath))
+                        except Exception as e:
+                            self._log.error("Failed to open: [{}]".format(tf_filepath))
+                            self._log.error("Exception: {}".format(str(e)))
+                        self._log.debug("{}: {} flagged for parsing!".format(self._logtitle, tf_file))
+                        self._log.debug(json.dumps(tf_variables, indent=4, sort_keys=True))
+                        # For each variable in the variables.tf file:
+                        # Put the variable into either the required, or optional respective list based on the existence or absence of a default value.
+                        self._log.info("{}: Parsing project variables defined in: {}.".format(self._logtitle, tf_filepath))
+
+                        # Parse each variable and place into the result variable in expected format.
+                        for k, v in tf_variables.get('variable').items():
+                            if v.get('default') == None:
+                                self._log.debug("{} Setting variable: {} as {}".format(self._logtitle, k, 'Required'))
+                                # Check the variable name len and update maxlength, then create and store the variable object.
+                                if len(k) > int(variable_results.get('required_vars_maxlength')):
+                                    self._log.debug("{}: Var: {} length: {} is longer then {}... setting required variable offset to: {}".format(self._logtitle, k, len(k), variable_results.get('required_vars_maxlength'), len(k)))
+                                    variable_results.update(required_vars_maxlength=len(k))
+                                # Create the variable obj and add it to the result set object.
+                                variable_results.get('required_vars').append({
+                                    'name': k,
+                                    'type': v.get('type', 'string'),
+                                    'description': v.get('description', "No Description Provided"),
+                                    'example_value': "Required Value"
+                                })
+                                self._log.debug("{}: Adding {} to required_vars list.".format(self._logtitle, k))
+                            # If the variable has a default value, then it must be an optional.
+                            else:
+                                self._log.debug("{} Setting variable: {} as {}".format(self._logtitle, k, 'Optional'))
+                                # Check the variable name len and update maxlength, then create and store the variable object.
+                                if len(k) > int(variable_results.get('optional_vars_maxlength')):
+                                    self._log.debug("{}: {} length: {} is longer then {}... setting optional variable offset to: {}".format(self._logtitle, k, len(k), variable_results.get('optional_vars_maxlength'), len(k)))
+                                    variable_results.update(optional_vars_maxlength=len(k))
+                                # Create the variable obj and add it to the result set object.
+                                variable_results.get('optional_vars').append({
+                                    'name': k,
+                                    'type': v.get('type', 'string'),
+                                    'description': v.get('description', "No Description Provided"),
+                                    'default': v.get('default', "Example Value")
+                                })
+                                self._log.debug("{}: Adding {} to optional_vars list.".format(self._logtitle, k))
+            # If no results were found then don't set the variables property attribute.
+            if not bool(variable_results.get('required_vars')) and not bool(variable_results.get('optional_vars')):
+                self._log.info("{}: Search for project variables files in {} yielded no results.".format(self._logtitle, tf_filepath))
+            else:
+                # Log and return the result list.
+                self._log.debug(' ')
+                self._log.info("{}: Variable list processing completed successfully.".format(self._logtitle))
+                self._log.info("{}: {} Required variables identified".format(self._logtitle, len(variable_results.get('required_vars'))))
+                self._log.info("{}: {} Optional variables identified".format(self._logtitle, len(variable_results.get('optional_vars'))))
+                self._log.debug(json.dumps(variable_results.get('required_vars'), indent=4, sort_keys=True))
+                self._log.debug(json.dumps(variable_results.get('optional_vars'), indent=4, sort_keys=True))
+                self._log.debug("{}: Saving variable search results to object".format(self._logtitle))
+                self._variables = variable_results
+        except Exception as e:
+            self._log.error("Terraform project variable parsing operation failed!")
+            self._log.error("Exception: {}".format(str(e)))
 
 
     # ############################################
