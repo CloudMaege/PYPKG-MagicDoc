@@ -48,7 +48,7 @@ def files(ctx):
             click.clear()
         log.header("MagicDoc TF File Summary:")
 
-        log.info("Invoking command magicdoc tf files.")
+        log.info("Invoking command magicdoc tf show files")
         log.info("Working with returned file object:")
         log.debug(json.dumps(files, indent=4, sort_keys=True))
         log.debug(' ')
@@ -98,7 +98,9 @@ def files(ctx):
 ##################################
 @show.command()
 @click.option(
-    '--include_examples', '-i', is_flag=False, show_envvar=True,
+    '--include_examples', '-i', show_envvar=True,
+    type=click.BOOL,
+    default=False,
     help='Include all subdirectories including example(s)'
 )
 @click.pass_context
@@ -116,7 +118,7 @@ def variables(ctx, include_examples: bool):
             click.clear()
         log.header("MagicDoc TF Variable Summary:")
 
-        log.info("Invoking command magicdoc tf variables.")
+        log.info("Invoking command magicdoc tf show variables")
         log.info("Working with returned variables object:")
         log.debug(json.dumps(variables, indent=4, sort_keys=True))
         log.debug(' ')
@@ -193,7 +195,9 @@ def variables(ctx, include_examples: bool):
 ################################
 @show.command()
 @click.option(
-    '--include_examples', '-i', is_flag=False, show_envvar=True,
+    '--include_examples', '-i', show_envvar=True,
+    type=click.BOOL,
+    default=False,
     help='Include all subdirectories including example(s)'
 )
 @click.pass_context
@@ -210,7 +214,7 @@ def outputs(ctx, include_examples):
             click.clear()
         log.header("MagicDoc TF Output Summary:")
 
-        log.info("Invoking command magicdoc tf outputs.")
+        log.info("Invoking command magicdoc tf show outputs")
         log.info("Working with returned outputs list:")
         log.debug(outputs)
         log.debug(' ')
@@ -256,16 +260,58 @@ def tree(ctx):
             click.clear()
         log.header("MagicDoc TF Project Tree:")
 
-        log.info("Invoking command magicdoc tf tree.")
+        log.info("Invoking command magicdoc tf show tree")
         log.debug("Call tree constructor module...")
         # Call the tree module to construct the tree variable used for output.
-        
         dir_tree = DirTree(ctx.obj.log, ctx.obj.workdir)
         log.debug("Directory tree render completed!")
         click.secho(dir_tree, fg='blue')
         click.echo()
     except Exception as e:
         log.error("MagicDoc failed to render directory tree structure! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
+        log.error("Exception: {}".format(str(e)))
+        click.echo()
+        sys.exit()
+
+
+###############################
+# TF Graph CMD:
+# CMD: magicdoc tf show graph
+################################
+@show.command()
+@click.option(
+    '--overwrite', '-o', show_envvar=True,
+    type=click.BOOL,
+    default=False,
+    help='Overwrite existing .terraform init if found.'
+)
+@click.pass_context
+def graph(ctx, overwrite):
+    """Display Terraform Project dot Graph Object"""
+    try:
+        # Assign context objects
+        log = ctx.obj.log
+
+        log.info("Invoking command magicdoc tf show graph")
+        log.debug("Calling terraform dot graph generation and working with returned graph object.")
+
+        if not ctx.obj.verbose:
+            click.clear()
+        log.header("MagicDoc TF Project Graph:")
+
+        # Trigger the property setter to populate the outputs object, then assign it for usage.
+        click.secho("Generating terraform graph dot object...", fg='green')
+        ctx.obj.tf.graph = overwrite
+        graph = ctx.obj.tf.graph
+        
+        if graph is not None:
+            log.debug("Terraform project graph structure object instantiation completed successfully!")
+            click.secho(graph, fg='blue')
+        else:
+            click.secho("Attempt to generate Terraform project graph structure object failed! See debug log for details", 'bright_red')
+        click.echo()
+    except Exception as e:
+        log.error("MagicDoc failed to generate graph dot structure object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.")
         log.error("Exception: {}".format(str(e)))
         click.echo()
         sys.exit()

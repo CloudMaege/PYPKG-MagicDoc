@@ -41,19 +41,25 @@ class TFMagicDoc(object):
         self._files = {}
         self._variables = {}
         self._outputs = []
-        # self.graph = None
+        self._graph = None
+        self._graph_image = None
+
+        # Set dependency binary checks
+        self._terraform_binary = shutil.which('terraform')
+        self._graphviz_dot_binary = shutil.which('dot')
+
+        # Set properties to track terraform command execution and object state.
+        # Terraform Object
+        self._terraform = None
+        # Terraform Init State. If this instance created the init, then this will be set, otherwise it will be left to none.
+        self._terraform_init_executed = None
 
         # Set object files property setter by calling itself and passing a value.
+        # Load Config if available
         if self._config_file is not None and self._config_file.endswith(('.yaml', '.yml')) and os.path.exists(os.path.join(self._path, self._config_file)):
             self.config = True
+        # Execute Files Setter, this object is needed for all other setters, and so should be ran at the time of instance instantiation.
         self.files = True
-
-        # Terraform output collection var
-        # self.tf_outputs = []
-
-        # Terraform graph var
-        # self.tf_graph = None
-        # self.tf_graph_image = None
 
 
     ############################################
@@ -68,6 +74,7 @@ class TFMagicDoc(object):
         else:
             self._log.write("MagicDoc config file not found in {}".format(self._path), 'yellow')
             self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+            return None
 
 
     @config.setter
@@ -123,6 +130,7 @@ class TFMagicDoc(object):
             sys.exit()
         else:
             return self._files
+
 
     @files.setter
     def files(self, init=True):
@@ -375,35 +383,59 @@ class TFMagicDoc(object):
             sys.exit()
 
 
-# TODO:
     ##############################################
     # Construct Terraform Graph:                 #
     ##############################################
-    # def build_graph(self):
-    #     '''Class method that runs a terraform graph on the module source code and produces a dot style diagram.'''
-    #     try:
-    #         # Instantiate the TF Object
-    #         tf = Terraform(working_dir=self._path)
-            
-    #         # Check to see if TF has been initialzed, and if not initialize it
-    #         try:
-    #             log.debug("Performing terraform init on {}".format(self._path))
-    #             if not os.path.exists(os.path.join(self._path, ".terraform")):
-    #                 tf.cmd('init')
-    #         except Exception as e:
-    #             log.error("Failed to perform terraform init execution on {} with exception: {}".format(self._path, str(e)))
+    @property
+    def graph(self):
+        """Getter for class property graph method. This object property will return a terraform graph dot definition if one was able to be generated."""
+        self._log.info("{}: {}.graph property requested".format(self._logtitle, self._logtitle))
+        if self._graph is None:
+            self._log.write("Specified project was unable to generate a graph object from: {}".format(self._path))
+            return None
+        else:
+            self._log.info(self._graph)
+            return self._graph
 
-    #         # Run a Terraform Graph action to generate the graph dot structure
-    #         try:
-    #             log.debug("Attempting to build terraform graph object...")
-    #             tf_graph = tf.cmd('graph')
-    #             self.tf_graph = tf_graph[1]
-    #             log.debug("Terraform graph object creation completed successfully")
-    #             log.debug(self.tf_graph)
-    #         except Exception as e:
-    #             log.error("Failed to perform terraform graph execution with exception: {}".format(str(e)))
-    #     except Exception as e:
-    #         log.error("Failed to build terraform graph object: {}".format(str(e)))
+
+    @graph.setter
+    def graph(self, overwrite=False):
+        """
+        Setter for class property graph method that will run a terraform init on the targeted directory, and then use that init environment to
+        generate a dot graph definition that can later be rendered for the use.
+        """
+        # Instantiate the results object to hold the outputs search results.
+        self._log.info("{}: {}.graph refresh requested".format(self._logtitle, self._logtitle))
+        self._log.info("{}: Overwrite Existing Init: {}".format(self._logtitle, overwrite))
+        self._log.info("")
+        # Intantiate outputs results dictionary object.
+        graph_results = []
+        try: 
+            # Call the Terraform init method
+            self.terraform_init(overwrite)
+
+            # Run a Terraform Graph action to generate the graph dot structure
+            try:
+                self._log.debug("{}: Attempting to generate `terraform graph` dot structure in target project directory: {}".format(self._logtitle, self._path))
+                if self._terraform is not None:
+                    self._log.debug("{}.graph current value: {}".format(self._logtitle, self._graph))
+                    self._log.debug("{}: Executing `terraform graph` in target project directory: {}".format(self._logtitle, self._path))
+                    graph_results = self._terraform.cmd('graph')
+                    self._graph = graph_results[1]
+                    self._log.debug("{}: Terraform graph dot structure object was created successfully!".format(self._logtitle))
+                    self._log.debug(self._graph)
+                    self._log.debug("")
+            except Exception as e:
+                log.warning("Failed to perform `terraform graph` execution on the target project directory: {}".format(self._path))
+                log.warning("{}".format(str(e)))
+
+            # TODO: Move this to its own method!!!
+            # If this method executed the terraform init then clean up the .terraform directory.
+            if self._terraform_init_executed is not None and self._terraform_init_executed:
+                self.terraform_init_cleanup(self._terraform_init_executed)
+        except Exception as e:
+            log.warning("Failed to generate terraform graph structure object on target project directory: {}".format(self._path))
+            log.warning("{}".format(str(e)))
 
 
     # def render_graph_image(self):
@@ -442,3 +474,89 @@ class TFMagicDoc(object):
     #             return self.tf_graph_image
     #     else:
     #         log.warning("Terraform graph image render failed because the Graphviz dot executable was not found in the system path. Install the Graphviz dot binary to render the graph on future executions.")
+
+
+    ##############################################
+    # Instantiate Terraform Object:              #
+    ##############################################
+    def _terraform_instance(self):
+        """Class method that creates a terraform object that can be used to perform actions against the target project directory using terraform."""
+        # Instantiate the TF Object
+        self._log.info("{}: Terraform object instantiation requested!".format(self._logtitle))
+        if self._terraform is None:
+            self._log.debug("{}: Attempting to instantiate Terraform object instance against the project directory: {}".format(self._logtitle, self._path))
+            try:
+                self._terraform = Terraform(working_dir=self._path)
+                self._log.debug("{}: Terraform Object instantiation completed successfully: {}".format(self._logtitle))
+                self._log.debug("")
+            except Exception as e:
+                log.warning("Attempt to instantiate a terraform object in the target directory failed.")
+                log.warning("Exception: {}".format(str(e)))
+        else:
+            self._log.debug("{}: Existing Terraform object already exists... [Skipping...]: {}".format(self._logtitle))
+
+    
+    #########################################################
+    # Perform Terraform Init Execution and Cleanup Methods: #
+    #########################################################
+    def terraform_init(self, overwrite=False):
+        """Class method that performs a terraform init on the working directory.
+        If an existing .terraform directory exists then overwrite must be set to True in order to refresh the init, otherwise, the
+        init will be skipped.
+        """
+        self._log.info("{}: Terraform init action requested!".format(self._logtitle))
+        self._log.debug("{}: Overwrite existing init: {}".format(self._logtitle, overwrite))
+        self._log.debug("{}: Terraform Binary Installed: {}".format(self._logtitle, self._terraform_binary))
+        # Call this instances object creation method. If an object is already set, then the method will use the existing object.
+        self._terraform_instance()
+        try:
+            if self._terraform_binary is not None:
+                if self._terraform is not None:
+                    self._log.debug("{}: Attempting to run `terraform init` on the target project directory: {}".format(self._logtitle, self._path))
+                    # TODO: Need to check if this will reflect new changes or if an existing .terraform directory should be removed and recreated..
+                    # TODO: If the finding is that the directory should be removed, then need to be state file aware to ensure that if local state
+                    # is being used that the state is not removed, altered or affected by this at all. Default location of the state file is located
+                    # in terraform.tfstate so just need to exact match .terraform and not do a like terraform when removing the directory.
+                    init_exists = True if os.path.exists(os.path.join(self._path, '.terraform')) else False
+                    if not init_exists or (init_exists and overwrite):
+                        if init_exists:
+                            self._log.debug("{}: A directory named .terraform already exists in the target project directory... Overwrite requested...: {}".format(self._logtitle))
+                        else:
+                            self._log.debug("{}: Search for .terraform directory in the target project path yielded no results. One will be created...".format(self._logtitle))
+                        self._log.write("{}: Executing `terraform init` on target project directory: {}".format(self._logtitle, self._path), 'yellow')
+                        return_code, stdout, stderr = self._terraform.cmd('init', capture_output=False)
+                        self._log.write("{}: Execution of `terraform init` completed successfully against the target directory: {}".format(self._logtitle, self._path), 'yellow')
+                        self._terraform_init_executed = True
+                    else:
+                        self._log.debug("{}: Project directory already contains a .terraform directory and Overwrite set to: {}. Aborting the init!".format(self._logtitle, overwrite))
+                else:
+                    self._log.warning("A valid terraform instance could not be found. Terraform Init operation cannot proceed.")
+            else:
+                self._log.write("{}: Terraform does not appear to be installed in this environment. Terraform Init operation cannot proceed.".format(self._logtitle))
+                self._log.write("{}: Terraform can be downloaded from https://www.terraform.io/downloads.html.".format(self._logtitle))
+        except Exception as e:
+            log.warning("Failed to perform `terraform init` execution on the target project directory: {}".format(self._path))
+            log.warning("{}".format(str(e)))
+
+
+    def terraform_init_cleanup(self, confirm=False):
+        """Class method that performs a terraform init directory cleanup on the working directory.
+        If an existing .terraform directory exists and confirm is true, then the directory will be removed from the directory path.
+        """
+        self._log.info("{}: Terraform init cleanup action requested!".format(self._logtitle))
+        self._log.debug("{}: Confirm .terraform directory cleanup: {}".format(self._logtitle, confirm))
+        try:
+            if confirm:
+                self._log.debug("{}: Cleaning up the .terraform directory in target project directory: {}".format(self._logtitle, self._path))
+                tf_init_cleanup_directory = os.path.join(self._path, '.terraform')
+                if os.path.exists(tf_init_cleanup_directory) and tf_init_cleanup_directory.endswith('.terraform') and 'tfstate' not in tf_init_cleanup_directory:
+                    shutil.rmtree(tf_init_cleanup_directory)
+                    self._log.debug("{}: Init cleanup completed successfully in the target project directory. Removed directory: {}".format(self._logtitle, tf_init_cleanup_directory))
+                else:
+                    self._log.debug("{}: Init cleanup failed to locate the .terraform directory in the target project directory: {}".format(self._logtitle, self._path))
+            else:
+                self._log.warning("Request to clean the .terraform directory in the target project path must be called setting the confirm property to True. Aborting Cleanup..")
+                self._log.warning("{}".format(str(e)))
+        except Exception as e:
+            self._log.warning("Failed to remove the .terraform directory in the target project directory path: {}".format(self._path))
+            self._log.warning("{}".format(str(e)))

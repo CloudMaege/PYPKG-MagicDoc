@@ -30,54 +30,79 @@ class Environment(object):
     class Log():
             """CLI Log class to allow easy logging throughout the application"""
 
-            def __init__(self, verbose):
+            def __init__(self, verbose, verbose_level):
                 self.verbose = verbose
+                self.verbose_level = verbose_level
 
             def clear(self):
                 """Log method that will perform a screen clear when called"""
                 click.clear()
             
-            def write(self, msg, termcolor='green'):
+            def write(self, msg, termcolor='green', fnl=False, enl=False):
                 """Log method to print output to the shell"""
                 # Set termcolor if message type was specified
                 termcolor = "red" if termcolor.lower() == "error" else termcolor
                 termcolor = "bright_red" if termcolor.lower() == "warning" else termcolor
                 termcolor = "cyan" if termcolor.lower() == "info" else termcolor
                 termcolor = "magenta" if termcolor.lower() == "debug" else termcolor
-                click.echo()
+                if fnl:
+                    click.echo()
                 click.secho(msg, file=sys.stderr, fg=termcolor)
+                if enl:
+                    click.echo()
 
-            def header(self, msg):
+            def header(self, msg, fnl=True, enl=True):
                 """Log method to print command title to the shell"""
                 # Set termcolor if message type was specified
                 msg_length = len(msg)
-                click.echo(' ')
+                if fnl:
+                    click.echo()
                 click.secho(msg, file=sys.stderr, fg='yellow')
                 click.secho("{}".format("=" * msg_length), fg='yellow')
-                click.echo(' ')
+                if enl:
+                    click.echo()
 
-            def debug(self, msg):
+            def options(self, msg, option, fnl=False, enl=True):
+                """Log method to print command options"""
+                # Set termcolor if message type was specified
+                if fnl:
+                    click.echo()
+                click.secho("{}:{}".format(msg, " " * 25), file=sys.stderr, fg='blue', nl=False)
+                click.secho("{}".format(option), file=sys.stderr, fg='cyan')
+                if enl:
+                    click.echo()
+
+            def debug(self, msg, fnl=False, enl=False):
                 """Print a debug message to the shell"""
                 offset = 3
-                if self.verbose:
+                level = self.verbose_level.lower()
+                visible = ['debug', 'info', 'warning', 'error']
+                if self.verbose and any(level in str for level in visible):
                     click.secho("{}:{}{}".format("DEBUG", " " * offset, msg), file=sys.stderr, fg='magenta')
 
             def info(self, msg):
                 """Print a info message to the shell"""
                 offset = 4
-                if self.verbose:
+                level = self.verbose_level.lower()
+                visible = ['info', 'warning', 'error']
+                if self.verbose and any(level in str for level in visible):
                     click.secho("{}:{}{}".format("INFO", " " * offset, msg), file=sys.stderr, fg='cyan')
 
             def warning(self, msg):
                 """Print a warning message to the shell"""
                 offset = 1
-                if self.verbose:
+                level = self.verbose_level.lower()
+                visible = ['warning', 'error']
+                if self.verbose and any(level in str for level in visible):
                     click.secho("{}:{}{}".format("WARNING", " " * offset, msg), file=sys.stderr, fg='bright_red')
 
             def error(self, msg):
                 """Print a error message to the shell"""
                 offset = 3
-                click.secho("{}:{}{}".format("ERROR", " " * offset, msg), file=sys.stderr, fg='red')
+                level = self.verbose_level.lower()
+                visible = ['error']
+                if self.verbose and any(level in str for level in visible):
+                    click.secho("{}:{}{}".format("ERROR", " " * offset, msg), file=sys.stderr, fg='red')
 
 
     def __init__(self):
@@ -160,6 +185,12 @@ pass_environment = click.make_pass_decorator(Environment, ensure=True)
     help='Enables verbose mode.'
 )
 @click.option(
+    '--verbose_level', '-vl', show_envvar=True,
+    type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR'], case_sensitive=False),
+    default='DEBUG'
+    help='Enables verbose mode.'
+)
+@click.option(
     '--directory', '-d', show_envvar=True,
     type=click.Path(exists=True, file_okay=False, resolve_path=True),
     help='Changes the working directory where files will be read from and written to.'
@@ -181,22 +212,29 @@ pass_environment = click.make_pass_decorator(Environment, ensure=True)
     help='Disable recursion, This will exclude searching any sub-directory found in the workdir.'
 )
 @pass_environment
-def cli(ctx, verbose: bool, directory: str, exclude_dir: str, config: str, no_recursion: bool):
+def cli(ctx, verbose: bool, verbose_level: str, directory: str, exclude_dir: str, config: str, no_recursion: bool):
     """Terraform based project commands and utilities"""
+    this = "MagicDocCMD:tf"
+    ctx.log.info("{}: Instantiating `magicdoc tf` environment...".format(this))
+    
     # Set the default template directory.
     ctx.template_dir = CTX_TEMPLATE_DIR
+    ctx.log.debug("{}: Setting environment template directory location: {}".format(this, CTX_TEMPLATE_DIR))
 
     # If user specified verbose settings set it, or pull from environment context.
     ctx.verbose = verbose
     ctx.log.verbose = verbose
+    ctx.log.debug("{}: Setting environment verbose setting: {}".format(this, ctx.verbose))
 
     # If user specified workdir settings set it, or pull from environment context.
     if directory is not None:
         ctx.workdir = directory
+    ctx.log.debug("{}: Setting environment working directory: {}".format(this, ctx.workdir))
 
     # If user specified a sub directory exclusion then pass it, otherwise the default is set to None.
     if exclude_dir is not None:
         ctx.exclude_dir = exclude_dir
+    ctx.log.debug("{}: Setting environment excluded directory: {}".format(this, ctx.exclude_dir))
 
     # Allow the user to specify a custom path/filename to the MagicDoc config.
     if config is not None and config.endswith(('.yaml', '.yml')):
