@@ -64,13 +64,20 @@ class Environment(object):
             self.log.info("{}: Environment object format_as_map call initiated...".format(LOG_CONTEXT))
             self.log.info("{}: Function: format_as_map called with provided value type: {}".format(LOG_CONTEXT, type(arg_value)))
             self.log.debug("{}: \n{}".format(LOG_CONTEXT, json.dumps(arg_value, indent=4, sort_keys=True)))
-            click.secho("{}{{".format(" " * arg_indent), fg='cyan')
+            # Calculate an offset value
+            arg_offset = 0 if arg_offset == 0 else arg_offset
+            for k, v in arg_value.items():
+                if len(k) > arg_offset:
+                    arg_offset = len(k)
+            # Render the map/dict/object
+            click.secho("{}{{".format(" " * arg_indent), fg='yellow')
             self.log.debug("{}: Attempting to parse object into proper map, dict, or object format".format(LOG_CONTEXT))
             for k, v in arg_value.items():
+                offset = arg_offset - len(k)
                 self.log.debug("{}: Attempting to format: {} = {}".format(LOG_CONTEXT, k, v))
-                click.secho("{}{}{} = ".format(" " * (arg_indent + 4), k, " " * arg_offset), fg='cyan', nl=False)
+                click.secho("{}{}{} = ".format(" " * (arg_indent + 4), k, " " * offset), fg='blue', nl=False)
                 click.secho("'{}'".format(v), fg='green')
-            click.secho("{}}}".format(" " * arg_indent), fg='cyan')
+            click.secho("{}}}".format(" " * arg_indent), fg='yellow')
             self.log.info("{}: Provided object formatted successfully!".format(LOG_CONTEXT))
         except Exception as e:
             self.log.warning("{}: Attempt to format [map, object, dict] matched variable for shell display failed!. Defaulting to raw string format...".format(LOG_CONTEXT))

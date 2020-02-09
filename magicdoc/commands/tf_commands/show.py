@@ -373,8 +373,8 @@ def graph(ctx, overwrite):
 
 
 ###############################
-# TF Graph CMD:
-# CMD: magicdoc tf show graph
+# TF Git CMD:
+# CMD: magicdoc tf show git
 ################################
 @show.command()
 @click.pass_context
@@ -402,11 +402,11 @@ def git(ctx):
 
         # Trigger the property setter to populate the outputs object, then assign it for usage.
         click.secho("Attempting to parse target project git config...", fg='green')
-        repo = GitParser(ctx.obj.log, ctx.obj.workdir)
+        git = GitParser(ctx.obj.log, ctx.obj.workdir)
         
-        if repo.config is not None and isinstance(repo.config, list) and len(repo.config) > 0:
+        if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
             log.debug("{}: Terraform project repo object instantiation completed successfully!".format(log_msg))
-            ctx.obj.format_as_list(repo.config)
+            ctx.obj.format_as_list(git.config)
         else:
             click.secho("Attempt to parse Terraform project git config failed! See debug log for details", 'bright_red')
         click.echo()
@@ -417,3 +417,114 @@ def git(ctx):
         click.echo()
         sys.exit()
 
+
+###############################
+# TF Repo CMD:
+# CMD: magicdoc tf show repo
+################################
+@show.command()
+@click.option(
+    '--token', '-t', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help='Provide Git Repository Auth Token.'
+)
+@click.pass_context
+def repo(ctx, token):
+    """Display Terraform Project Git Repository Data"""
+    # DEFINE_SELF: Assign function identifier, log and declare the cmd environment.
+    log = ctx.obj.log
+    this = inspect.stack()[0][3]
+    log_msg = "{}.{}".format(LOG_CONTEXT, this)
+
+    # CLS: Clear the screen for the command unless in verbose mode.
+    log.clear()
+
+    # HEADER Command function header.
+    # Options arg can be passed in the format of {'Option Text': 'Value'}
+    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Git Repository:", arg_args={'Git Authentication Token Provided': str(bool(token))})
+
+    # ACTION_TITLE: Define the command action title
+    log.write("MagicDoc [tf show {}] Command Environment:".format(this), arg_lower_nl=False)
+    log.write("Sending Terraform Project Git Repository Request...", arg_upper_nl=False, arg_lower_nl=True)
+    click.echo()
+
+    # COMMAND SYNTAX: Define the command sequence.
+    try:
+        log.debug("{}: Calling GitParser to attempt to send GET request to target project repository: {}.".format(log_msg, os.path.join(ctx.obj.workdir, '.git/config')))
+
+        # Trigger the property setter to populate the outputs object, then assign it for usage.
+        click.secho("Git Repository Response:", fg='yellow')
+        click.secho("========================", fg='yellow')
+        git = GitParser(ctx.obj.log, ctx.obj.workdir)
+        
+        if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
+            log.debug("{}: Terraform project repo object instantiation completed successfully!".format(log_msg))
+            git.repo = token
+            ctx.obj.format_as_map(git.repo)
+        else:
+            click.secho("The Terraform project git repository request failed! See debug log for details", 'bright_red')
+        click.echo()
+    except Exception as e:
+        log.write("MagicDoc failed to receive valid data back from a sent request for the target directories  git repository. Please Ensure that the project has a git configuration and try again.", 'warning', arg_upper_nl=True, arg_lower_nl=True)
+        log.warning("{}: MagicDoc failed to receive a valid git repository response for the target project!".format(log_msg))
+        log.warning("{}: Exception: {}".format(log_msg, str(e)))
+        click.echo()
+        sys.exit()
+
+
+###############################
+# TF Release CMD:
+# CMD: magicdoc tf show release
+################################
+@show.command()
+@click.option(
+    '--token', '-t', show_envvar=True,
+    type=click.STRING,
+    default=None,
+    help='Provide Git Repository Auth Token.'
+)
+@click.pass_context
+def release(ctx, token):
+    """Display Terraform Project Latest Release"""
+    # DEFINE_SELF: Assign function identifier, log and declare the cmd environment.
+    log = ctx.obj.log
+    this = inspect.stack()[0][3]
+    log_msg = "{}.{}".format(LOG_CONTEXT, this)
+
+    # CLS: Clear the screen for the command unless in verbose mode.
+    log.clear()
+
+    # HEADER Command function header.
+    # Options arg can be passed in the format of {'Option Text': 'Value'}
+    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Latest Release:", arg_args={'Git Authentication Token Provided': str(bool(token))})
+    click.echo()
+
+    # ACTION_TITLE: Define the command action title
+    log.write("MagicDoc [tf show {}] Command Environment:".format(this), arg_lower_nl=False)
+    log.write("Sending Terraform Project Git Release Request...", arg_upper_nl=False, arg_lower_nl=True)
+    click.echo()
+
+    # COMMAND SYNTAX: Define the command sequence.
+    try:
+        log.debug("{}: Calling GitParser to attempt to send GET request to target project repository release data: {}.".format(log_msg, os.path.join(ctx.obj.workdir, '.git/config')))
+
+        # Trigger the property setter to populate the outputs object, then assign it for usage.
+        click.secho("Project Latest Release:", fg='green')
+        click.secho("=======================", fg='green')
+        git = GitParser(ctx.obj.log, ctx.obj.workdir)
+        
+        if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
+            log.debug("{}: Terraform project config object instantiation completed successfully!".format(log_msg))
+            # Call the repo method to gather the required data from github.
+            git.repo = token
+            ctx.obj.log.args("{} Latest Release".format(git.repo.get('name')), "     {}".format(git.release))
+        else:
+            click.secho("The Terraform project git repository release request failed! See debug log for details", 'bright_red')
+        click.echo()
+    except Exception as e:
+        log.write("MagicDoc failed to receive valid data back from a request sent to obtain the lastest project release. Please Ensure that the project has a git configuration and try again.", 'warning', arg_upper_nl=True, arg_lower_nl=True)
+        log.warning("{}: MagicDoc failed to receive a valid git repository release response for the target project!".format(log_msg))
+        log.warning("{}: Exception: {}".format(log_msg, str(e)))
+        click.echo()
+        sys.exit()
