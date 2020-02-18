@@ -59,6 +59,7 @@ class TFMagicDoc(object):
         # Load Config if available
         if self._config_file is not None and self._config_file.endswith(('.yaml', '.yml')) and os.path.exists(os.path.join(self._path, self._config_file)):
             self.config = True
+            self.update_variables()
         # Execute Files Setter, this object is needed for all other setters, and so should be ran at the time of instance instantiation.
         self.files = True
 
@@ -76,8 +77,12 @@ class TFMagicDoc(object):
         if self._config is not None and isinstance(self._config, dict) and bool(self._config):
             return self._config
         else:
-            self._log.write("MagicDoc config file not found in {}".format(self._path), 'yellow')
-            self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
+            self._log.write("")
+            self._log.write("WARNING:", 'bright_red')
+            self._log.write("MagicDoc config file not found in {}".format(self._path), 'bright_red')
+            self._log.write("A properly formatted project config can be created using the `magicdoc tf create config -t module` command.", 'bright_red')
+            self._log.write("Attempting to generate a temp config file to continue...", 'cyan')
+            self._log.write("")
             return None
 
 
@@ -122,7 +127,8 @@ class TFMagicDoc(object):
                 self._log.error("The requested operation will continue, however config data will not be un-available.")
                 self._log.write("A properly formatted project config can be created using the `magicdoc tf config init` command.", 'yellow')
                 pass
-        self._log.debug("{}: Config file not found in project directory or is of invalid type: {}".format(log_msg, self._config_file))
+        else:
+            self._log.debug("{}: Config file not found in project directory or is of invalid type: {}".format(log_msg, self._config_file))
 
 
     ############################################
@@ -166,12 +172,15 @@ class TFMagicDoc(object):
                     if filename.endswith('.tf') and not filename.startswith('.terraform'):
                         if self._exclude_dir is not None and self._exclude_dir in filename:
                             self._log.debug("{}: Terraform .tf file: {} located in excluded subdirectory {}. [Skipping...]: {}".format(log_msg, filename, self._exclude_dir))
-                            continue
-                        self._log.debug("{}: Terraform .tf file match found: {}".format(log_msg, filename))
-                        file_search_results.get('list_tf_files').append(os.path.join(file_search_path, filename))
+                        else:
+                            self._log.debug("{}: Terraform .tf file match found: {}".format(log_msg, filename))
+                            file_search_results.get('list_tf_files').append(os.path.join(file_search_path, filename))
                     elif filename.endswith('.tfvars') and not filename.startswith('.terraform'):
-                        self._log.debug("{}: Terraform .tfvar file match found: {}".format(log_msg, filename))
-                        file_search_results.get('list_tfvar_files').append(os.path.join(file_search_path, filename))
+                        if self._exclude_dir is not None and self._exclude_dir in filename:
+                            self._log.debug("{}: Terraform .tfvar file: {} located in excluded subdirectory {}. [Skipping...]: {}".format(log_msg, filename, self._exclude_dir))
+                        else:
+                            self._log.debug("{}: Terraform .tfvar file match found: {}".format(log_msg, filename))
+                            file_search_results.get('list_tfvar_files').append(os.path.join(file_search_path, filename))
                 # If recursion is set to false, then break, as the first pass gathers only the current directory.
                 if self._no_recursion:
                     self._log.info("{}: Recursion disabled, only parsing parent directory results".format(log_msg))
@@ -225,7 +234,6 @@ class TFMagicDoc(object):
         self._log.info("{}: Refresh requested".format(log_msg))
         self._log.info("{}: Include example sub-directories in search: {}".format(log_msg, str(include_examples)))
         self._log.write("Scanning project directory for defined module variables...")
-        self._log.write("")
 
         # Intantiate variable results dictionary object.
         variable_results = {'required_vars': [], 'required_vars_maxlength': 0, 'optional_vars': [], 'optional_vars_maxlength': 0}
@@ -274,10 +282,10 @@ class TFMagicDoc(object):
                                     'type': v.get('type', 'string'),
                                     'description': v.get('description', "No Description Provided"),
                                     'example_value': "Required Value",
-                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': [], 'images':[]},
-                                    'variable_details': {'description': "", 'notes': [], 'images':[]},
-                                    'usage_details': {'description': "", 'notes': [], 'images':[]},
-                                    'additional': {'description': "", 'notes': [], 'images':[]}
+                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': "", 'images': ""},
+                                    'variable_details': {'description': "", 'notes': "", 'images': ""},
+                                    'usage_details': {'description': "", 'notes': "", 'images': ""},
+                                    'additional': {'description': "", 'notes': "", 'images': ""}
                                 })
                                 self._log.debug("{}: Adding {} to required_vars list.".format(log_msg, k))
                             # If the variable has a default value, then it must be an optional.
@@ -293,10 +301,11 @@ class TFMagicDoc(object):
                                     'type': v.get('type', 'string'),
                                     'description': v.get('description', "No Description Provided"),
                                     'default': v.get('default', "Example Value"),
-                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': [], 'images':[]},
-                                    'variable_details': {'description': "", 'notes': [], 'images':[]},
-                                    'usage_details': {'description': "", 'notes': [], 'images':[]},
-                                    'additional': {'description': "", 'notes': [], 'images':[]}
+                                    'example_value': "Example Value",
+                                    'general_details': {'description': v.get('description', "No Description Provided"), 'notes': "", 'images': ""},
+                                    'variable_details': {'description': "", 'notes': "", 'images': ""},
+                                    'usage_details': {'description': "", 'notes': "", 'images': ""},
+                                    'additional': {'description': "", 'notes': "", 'images': ""}
                                 })
                                 self._log.debug("{}: Adding {} to optional_vars list.".format(log_msg, k))
             # If no results were found then don't set the variables property attribute.
@@ -316,6 +325,80 @@ class TFMagicDoc(object):
             self._log.error("Terraform project variable parsing operation failed!")
             self._log.error("Exception: {}".format(str(e)))
             sys.exit()
+
+
+    def update_variables(self):
+        """
+        This Method will patch the terraform variables with additional information from a loaded config file for the project documentation render.
+        """
+        # Instantiate the results object to hold the variables search results.
+        # Define this function for logging
+        this = inspect.stack()[0][3]
+        log_msg = "{}.{}".format(self._log_context, this)
+        self._log.info("{}: Refresh requested".format(log_msg))
+
+        def set_config_details(variables_list, config_variable_dict):
+            """Try and update the terraform variable to include additional documentation details"""
+            try:
+                for variable in variables_list:
+                    # Construct the processing variables.
+                    tf_variable_name = variable.get('name')
+                    config = config_variable_dict.get(tf_variable_name)
+                    
+                    # Update the module example
+                    if config.get('ExampleValue') is not None and config.get('ExampleValue') != "":
+                        variable.update(example_value=config.get('ExampleValue'))
+
+                    # Update General Details
+                    if config.get('GeneralDetails').get('Description') is not None and config.get('GeneralDetails').get('Description') != "":
+                        variable.get('general_details').update(description=config.get('GeneralDetails').get('Description'))
+                    if config.get('GeneralDetails').get('Notes') is not None and config.get('GeneralDetails').get('Notes') != "":
+                        variable.get('general_details').update(notes=config.get('GeneralDetails').get('Notes'))
+                    if config.get('GeneralDetails').get('Images') is not None and config.get('GeneralDetails').get('Images') != "":
+                        variable.get('general_details').update(images=config.get('GeneralDetails').get('Images'))
+                    
+                    # Update Variable Details
+                    if config.get('VariableDetails').get('Description') is not None and config.get('VariableDetails').get('Description') != "":
+                        variable.get('variable_details').update(description=config.get('VariableDetails').get('Description'))
+                    if config.get('VariableDetails').get('Notes') is not None and config.get('VariableDetails').get('Notes') != "":
+                        variable.get('variable_details').update(notes=config.get('VariableDetails').get('Notes'))
+                    if config.get('VariableDetails').get('Images') is not None and config.get('VariableDetails').get('Images') != "":
+                        variable.get('variable_details').update(images=config.get('VariableDetails').get('Images'))
+
+                    # Update Usage Details
+                    if config.get('UsageDetails').get('Description') is not None and config.get('UsageDetails').get('Description') != "":
+                        variable.get('usage_details').update(description=config.get('UsageDetails').get('Description'))
+                    if config.get('UsageDetails').get('Notes') is not None and config.get('UsageDetails').get('Notes') != "":
+                        variable.get('usage_details').update(notes=config.get('UsageDetails').get('Notes'))
+                    if config.get('UsageDetails').get('Images') is not None and config.get('UsageDetails').get('Images') != "":
+                        variable.get('usage_details').update(images=config.get('UsageDetails').get('Images'))
+
+                    # Update Additional Details
+                    if config.get('Additional').get('Description') is not None and config.get('Additional').get('Description') != "":
+                        variable.get('additional').update(description=config.get('Additional').get('Description'))
+                    if config.get('Additional').get('Notes') is not None and config.get('Additional').get('Notes') != "":
+                        variable.get('additional').update(notes=config.get('Additional').get('Notes'))
+                    if config.get('Additional').get('Images') is not None and config.get('Additional').get('Images') != "":
+                        variable.get('additional').update(images=config.get('Additional').get('Images'))
+            except:
+                # If something went wrong, the the defaults will be sufficient, This will be more robust by release 1
+                pass
+
+        # Try and process the variables list
+        try:
+            # Iterate through the project files and look for any files named variables.tf, if found, parse the files and construct an object for each variable that will be stored into the class dictionary object.
+            self._log.info("{}: Validating terraform variable dictionary.".format(log_msg))
+            if self._variables is not None and isinstance(self._variables, dict) and bool(self._variables):
+                if self._config is not None and isinstance(self._config, dict) and bool(self._config):
+                    if isinstance(self._config.get('Variables'), dict) and bool(self._config.get('Variables')):
+                        # Parse each variable and place into the result variable in expected format.
+                        tf_required_variable_config_data = self._config.get('Variables').get('Required')
+                        set_config_details(self._variables.get('required_vars'), tf_required_variable_config_data)
+                        
+                        tf_optional_variable_config_data = self._config.get('Variables').get('Optional')
+                        set_config_details(self._variables.get('optional_vars'), tf_optional_variable_config_data)
+        except Exception as e:
+            self._log.write("Unable to update terraform variables with config data: {}".format(str(e)), 'error')
 
 
     ############################################
@@ -350,7 +433,6 @@ class TFMagicDoc(object):
         self._log.info("{}: Refresh requested".format(log_msg))
         self._log.info("{}: Include example sub-directories in search: {}".format(log_msg, str(include_examples)))
         self._log.write("Scanning project directory for defined module outputs...")
-        self._log.write("")
 
         # Intantiate outputs results dictionary object.
         outputs_results = []

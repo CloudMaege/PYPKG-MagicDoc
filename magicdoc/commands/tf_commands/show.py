@@ -77,12 +77,12 @@ def files(ctx):
         for filename in files.get('list_tf_files', []):
             file_path, file_name = ntpath.split(filename)
             file_path = file_path.replace("/", "")
-            log.debug("{}: {}: Using file path: {}".format(log_msg, str(file_path)))
-            log.debug("{}: {}: Using file name: {}".format(log_msg, str(file_name)))
+            log.debug("{}: Using file path: {}".format(log_msg, str(file_path)))
+            log.debug("{}: Using file name: {}".format(log_msg, str(file_name)))
             if file_path != "":
                 click.secho("{}/".format(file_path), fg='bright_red', nl=False)
             click.secho(file_name, fg='cyan')
-        log.debug("{}: {}: Listing .tf file results completed!".format(log_msg))
+        log.debug("{}: Listing .tf file results completed!".format(log_msg))
         click.echo()
 
         # List TFVar Files:
@@ -91,12 +91,12 @@ def files(ctx):
         for filename in files.get('list_tfvar_files', []):
             file_path, file_name = ntpath.split(filename)
             file_path = file_path.replace("/", "")
-            log.debug("{}: {}: Using file path: {}".format(log_msg, str(file_path)))
-            log.debug("{}: {}: Using file name: {}".format(log_msg, str(file_name)))
+            log.debug("{}: Using file path: {}".format(log_msg, str(file_path)))
+            log.debug("{}: Using file name: {}".format(log_msg, str(file_name)))
             if file_path != "":
                 click.secho("{}/".format(file_path), fg='bright_red', nl=False)
             click.secho(file_name, fg='cyan')
-        log.debug("{}: {}: Listing .tfvar file results completed!".format(log_msg))
+        log.debug("{}: Listing .tfvar file results completed!".format(log_msg))
         click.echo()
     except Exception as e:
         log.write("MagicDoc failed to parse the terraform project files object! Check your syntax, and retry. If you feel this is a bug please submit an issue on the project repository.", 'error', arg_upper_nl=True, arg_lower_nl=True)
@@ -104,7 +104,6 @@ def files(ctx):
         log.error("{}: Exception: {}".format(log_msg, str(e)))
         click.echo()
         sys.exit()
-
 
 ##################################
 # TF Variables CMD:
@@ -406,7 +405,8 @@ def git(ctx):
         
         if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
             log.debug("{}: Terraform project repo object instantiation completed successfully!".format(log_msg))
-            ctx.obj.format_as_list(git.config)
+            for item in git.config:
+                ctx.obj.format_as_map(item)
         else:
             click.secho("Attempt to parse Terraform project git config failed! See debug log for details", 'bright_red')
         click.echo()
@@ -424,13 +424,13 @@ def git(ctx):
 ################################
 @show.command()
 @click.option(
-    '--token', '-t', show_envvar=True,
+    '--auth', '-a', show_envvar=True,
     type=click.STRING,
     default=None,
     help='Provide Git Repository Auth Token.'
 )
 @click.pass_context
-def repo(ctx, token):
+def repo(ctx, auth):
     """Display Terraform Project Git Repository Data"""
     # DEFINE_SELF: Assign function identifier, log and declare the cmd environment.
     log = ctx.obj.log
@@ -442,7 +442,7 @@ def repo(ctx, token):
 
     # HEADER Command function header.
     # Options arg can be passed in the format of {'Option Text': 'Value'}
-    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Git Repository:", arg_args={'Git Authentication Token Provided': str(bool(token))})
+    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Git Repository:", arg_args={'Git Authentication Token Provided': str(bool(auth))})
 
     # ACTION_TITLE: Define the command action title
     log.write("MagicDoc [tf show {}] Command Environment:".format(this), arg_lower_nl=False)
@@ -460,7 +460,7 @@ def repo(ctx, token):
         
         if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
             log.debug("{}: Terraform project repo object instantiation completed successfully!".format(log_msg))
-            git.repo = token
+            git.repo = auth
             ctx.obj.format_as_map(git.repo)
         else:
             click.secho("The Terraform project git repository request failed! See debug log for details", 'bright_red')
@@ -479,13 +479,13 @@ def repo(ctx, token):
 ################################
 @show.command()
 @click.option(
-    '--token', '-t', show_envvar=True,
+    '--auth', '-a', show_envvar=True,
     type=click.STRING,
     default=None,
     help='Provide Git Repository Auth Token.'
 )
 @click.pass_context
-def release(ctx, token):
+def release(ctx, auth):
     """Display Terraform Project Latest Release"""
     # DEFINE_SELF: Assign function identifier, log and declare the cmd environment.
     log = ctx.obj.log
@@ -497,7 +497,7 @@ def release(ctx, token):
 
     # HEADER Command function header.
     # Options arg can be passed in the format of {'Option Text': 'Value'}
-    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Latest Release:", arg_args={'Git Authentication Token Provided': str(bool(token))})
+    log.header(log_msg, "show {}".format(this), "MagicDoc Terraform Project Latest Release:", arg_args={'Git Authentication Token Provided': str(bool(auth))})
     click.echo()
 
     # ACTION_TITLE: Define the command action title
@@ -517,7 +517,7 @@ def release(ctx, token):
         if git.config is not None and isinstance(git.config, list) and len(git.config) > 0:
             log.debug("{}: Terraform project config object instantiation completed successfully!".format(log_msg))
             # Call the repo method to gather the required data from github.
-            git.repo = token
+            git.repo = auth
             ctx.obj.log.args("{} Latest Release".format(git.repo.get('name')), "     {}".format(git.release))
         else:
             click.secho("The Terraform project git repository release request failed! See debug log for details", 'bright_red')

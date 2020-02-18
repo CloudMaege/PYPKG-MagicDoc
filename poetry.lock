@@ -46,6 +46,17 @@ version = "7.0"
 
 [[package]]
 category = "main"
+description = "Quickly and easily define, load, render and write Jinja templates."
+name = "cloudmage-jinjautils"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "1.0.2"
+
+[package.dependencies]
+jinja2 = ">=2.11.1,<3.0.0"
+
+[[package]]
+category = "main"
 description = "Cross-platform colored terminal text."
 name = "colorama"
 optional = false
@@ -217,7 +228,7 @@ category = "main"
 description = "YAML parser and emitter for Python"
 name = "pyyaml"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = "*"
 version = "5.3"
 
 [[package]]
@@ -274,14 +285,14 @@ marker = "python_version < \"3.8\""
 name = "zipp"
 optional = false
 python-versions = ">=3.6"
-version = "2.1.0"
+version = "2.2.0"
 
 [package.extras]
 docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools"]
 
 [metadata]
-content-hash = "3358c42c459ca301d0f5b0434614540f61e60953e7c2b19f3b9af25581fba334"
+content-hash = "d2d5d2f0f01053cce2c816c541f79705e8f9cc608a02f595ed0efb4b0a7cf5f9"
 python-versions = "^3.6"
 
 [metadata.files]
@@ -304,6 +315,10 @@ chardet = [
 click = [
     {file = "Click-7.0-py2.py3-none-any.whl", hash = "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13"},
     {file = "Click-7.0.tar.gz", hash = "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"},
+]
+cloudmage-jinjautils = [
+    {file = "CloudMage-JinjaUtils-1.0.2.tar.gz", hash = "sha256:a008e40bc0fbd0cca13a503af0d60efd4d79eaee619ad7c023f22a83314d4c89"},
+    {file = "CloudMage_JinjaUtils-1.0.2-py3-none-any.whl", hash = "sha256:17e0b40e911f6a401edd46754742c23666530446bbf84b44f67bbd00d3d53a55"},
 ]
 colorama = [
     {file = "colorama-0.4.3-py2.py3-none-any.whl", hash = "sha256:7d73d2a99753107a36ac6b455ee49046802e59d9d076ef8e47b61499fa29afff"},
@@ -420,6 +435,6 @@ wcwidth = [
     {file = "wcwidth-0.1.8.tar.gz", hash = "sha256:f28b3e8a6483e5d49e7f8949ac1a78314e740333ae305b4ba5defd3e74fb37a8"},
 ]
 zipp = [
-    {file = "zipp-2.1.0-py3-none-any.whl", hash = "sha256:ccc94ed0909b58ffe34430ea5451f07bc0c76467d7081619a454bf5c98b89e28"},
-    {file = "zipp-2.1.0.tar.gz", hash = "sha256:feae2f18633c32fc71f2de629bfb3bd3c9325cd4419642b1f1da42ee488d9b98"},
+    {file = "zipp-2.2.0-py36-none-any.whl", hash = "sha256:d65287feb793213ffe11c0f31b81602be31448f38aeb8ffc2eb286c4f6f6657e"},
+    {file = "zipp-2.2.0.tar.gz", hash = "sha256:5c56e330306215cd3553342cfafc73dda2c60792384117893f3a83f8a1209f50"},
 ]

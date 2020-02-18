@@ -149,5 +149,7 @@ class Log():
     def error(self, arg_msg):
         """Print a error message to the shell"""
         this_msg_offset = 3
-        if self.verbose and self._error:
-            click.secho("{}:{}{}".format("ERROR", " " * this_msg_offset, arg_msg), file=sys.stderr, fg='red')
+        click.echo()
+        click.secho("ATTENTION:", fg='red')
+        click.secho("{}:{}{}".format("ERROR", " " * this_msg_offset, arg_msg), file=sys.stderr, fg='red')
+        sys.exit()

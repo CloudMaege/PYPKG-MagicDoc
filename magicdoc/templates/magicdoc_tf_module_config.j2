@@ -1,0 +1,83 @@
+Config:
+    Type: Module
+#############################
+# Repository Configuration: #
+#############################
+Git:
+    Repository: {{ git.config.url|default('https://github.com/example/example', true) }}
+    Version:
+
+############################
+# README.md Configuration: #
+############################
+ReadMe:
+    Title:
+    HeroImage:
+    DocLink:
+    GettingStarted: >-
+        Description and base introduction of what this module does, use cases, or other relevant details about the module.
+    PreRequisites: >-
+        This module does not currently have any pre-requisites or dependency requirements.
+    Module: 
+    Changelog:
+    Contact:
+        UserName:
+        Email:
+
+############################
+# Variables Configuration: #
+############################
+Variables:
+    #######################
+    # Required Variables: #
+    #######################
+    Required:
+        Image:
+        {% for var in tf.variables.required_vars %}
+        {{var.name}}:
+            ExampleValue: {{ var.example_value }}
+            GeneralDetails:
+                Description: >-
+                    {{var.description}}
+                Notes:
+                Images:
+            VariableDetails:
+                Description:
+                Notes:
+                Images:
+            UsageDetails:
+                Description:
+                Notes:
+                Images:
+            Additional:
+                Description:
+                Notes:
+                Images:
+        {% endfor %}
+    #######################
+    # Optional Variables: #
+    #######################
+    Optional:
+        Image:
+        {% for var in tf.variables.optional_vars %}
+        {{var.name}}:
+            ExampleValue: {{ var.example_value }}
+            DefaultValue: {{ var.default }}
+            GeneralDetails:
+                Description: >-
+                    {{var.description}}
+                Notes:
+                Images:
+            VariableDetails:
+                Description:
+                Notes:
+                Images:
+            UsageDetails:
+                Description:
+                Notes:
+                Images:
+            Additional:
+                Description:
+                Notes:
+                Images:
+        {% endfor %}

@@ -15,14 +15,15 @@
 import click
 
 # Import Base Python Modules
-import os, sys, json, ntpath, inspect
+import os, sys, json, ntpath, inspect, imp
 
 # MagicDoc Imports
 from magicdoc.classes.TFMagicDoc import TFMagicDoc
 from magicdoc.commands.tf_commands import show as tf_show
+from magicdoc.commands.tf_commands import create as tf_create
 
 # Set the Module Path for the Templates directory
-MODULE_PATH = os.path.abspath(os.path.dirname(os.path.realpath('__file__')))
+MODULE_PATH = imp.find_module('magicdoc')[1]
 LOG_CONTEXT = "CMD->tf"
 
 # CLI Environment Class
@@ -36,16 +37,19 @@ class Environment(object):
 
     '''Define class constructor and class methods:'''
     def __init__(self):
+        self.config = None
         self.verbose = False
         self.verbose_level = None
         self.no_recursion = False
         self.workdir = os.getcwd()
         self.exclude_dir = None
         self.template_dir = None
-        self.config_template = 'tf_config.j2'
-        self.readme_template = 'tf_readme.j2'
-        self.changelog_template = 'changelog.j2'
-        self.gitignore_template = 'gitignore.j2'
+        self.module_config_template = 'magicdoc_tf_module_config.j2'
+        self.module_readme_template = 'magicdoc_tf_module_readme.j2'
+        self.root_config_template = 'magicdoc_tf_root_config.j2'
+        self.root_readme_template = 'magicdoc_tf_root_readme.j2'
+        self.changelog_template = 'magicdoc_changelog.j2'
+        self.gitignore_template = 'magicdoc_gitignore.j2'
         self.project_config = None
         self.tf = None
         self.terminal_colors = [
@@ -231,10 +235,12 @@ def env(ctx):
     env_project_config = "Found" if ctx.obj.project_config is not None and os.path.exists(ctx.obj.project_config) else "Not Found"
     env_tf = "Instantiated" if isinstance(ctx.obj.tf, object) else "Undefined"
     env_tf_files = "Found" if bool(ctx.obj.tf.files) else "Not Found"
-    env_config_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'tf_config.j2')) else "Not Found"
-    env_readme_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'tf_readme.j2')) else "Not Found"
-    env_changelog_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'changelog.j2')) else "Not Found"
-    env_gitignore_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'gitignore.j2')) else "Not Found"
+    env_module_config_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_tf_module_config.j2')) else "Not Found"
+    env_module_readme_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_tf_module_readme.j2')) else "Not Found"
+    env_root_config_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_tf_root_config.j2')) else "Not Found"
+    env_root_readme_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_tf_root_readme.j2')) else "Not Found"
+    env_changelog_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_changelog.j2')) else "Not Found"
+    env_gitignore_template = "Found" if ctx.obj.template_dir is not None and os.path.exists(os.path.join(ctx.obj.template_dir, 'magicdoc_gitignore.j2')) else "Not Found"
 
     # ACTION_TITLE: Define the command action title
     log.write("MagicDoc [tf] Command Environment:", arg_lower_nl=False)
@@ -282,10 +288,14 @@ def env(ctx):
 
     click.secho("Default Jinja Templates:", fg='yellow')
     click.secho("========================", fg='yellow')
-    click.secho("Config Template:                 ", fg='blue', nl=False)
-    click.secho(env_config_template, fg='green')
-    click.secho("ReadMe Template:                 ", fg='blue', nl=False)
-    click.secho(env_readme_template, fg='green')
+    click.secho("TF Module Config Template:       ", fg='blue', nl=False)
+    click.secho(env_module_config_template, fg='green')
+    click.secho("TF Module ReadMe Template:       ", fg='blue', nl=False)
+    click.secho(env_module_readme_template, fg='green')
+    click.secho("TF Root Config Template:         ", fg='blue', nl=False)
+    click.secho(env_root_config_template, fg='green')
+    click.secho("TF Root ReadMe Template:         ", fg='blue', nl=False)
+    click.secho(env_root_readme_template, fg='green')
     click.secho("Changelog Template:              ", fg='blue', nl=False)
     click.secho(env_changelog_template, fg='green')
     click.secho("GitIgnore Template:              ", fg='blue', nl=False)
@@ -334,3 +344,4 @@ def env(ctx):
 ##############################
 # Import Show Subcommands
 cli.add_command(tf_show.show)
+cli.add_command(tf_create.create)

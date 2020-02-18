@@ -61,7 +61,7 @@ class GitParser(object):
         this = inspect.stack()[0][3]
         log_msg = "{}.{}".format(self._log_context, this)
         self._log.info("{}: Property requested".format(log_msg))
-        if self._config is not None and isinstance(self._config, list) and bool(self._config):
+        if self._config is not None and isinstance(self._config, (list, dict)) and bool(self._config):
             return self._config
         else:
             self._log.write("MagicDoc git config file not found in {}".format(self._path), 'bright_red')
