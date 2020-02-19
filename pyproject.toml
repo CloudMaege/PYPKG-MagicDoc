@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "MagicDoc"
-version = "0.1.1"
+version = "0.1.2"
 description = "MagicDoc is a Python command line tool/library that is designed to provide an extremely simple way to automatically create detailed documentation for certain project types."
 authors = ["Rich Nason <rnason@cloudmage.io>"]
 maintainers = ["Rich Nason <rnason@cloudmage.io>"]
-license = "GNU GPL3"
+license = "GPL-3.0-or-later"
 readme = "README.md"
 include = [
     "CHANGELOG.md",

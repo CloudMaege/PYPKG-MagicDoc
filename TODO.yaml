@@ -48,3 +48,46 @@ PatchList:
   - create doc needs a backup flag that will toggle backups off.
   - create needs template option to allow passing custom template
   - Need to sync create capabilities with available option flags in the create command.
+  - Patch the template, to not include either the Required Variables or Optional variable sections if no variables of that type are present.
+  - Handle Outputs that have conditional values attached to them (Currently they make Jinja crash)
+  - Template Update - Check if map has items or not, currently if a variable is defined that has a blank or no default, then Jinja tries to process it and fails because 
+  its an empty object. (Parameter Groups Module)
+  - Variables or Outputs could be empty, check to ensure that if the file has no content to skip the file
+  
+
+
+Handle datastructure like this:
+
+```terraform
+variable "instance_details" {
+  description = "A map of names to objects describing each instance to build"
+  type        = map(object({
+    subnet_id            = string
+    security_group_ids   = list(string)
+    ami                  = string
+    instance_type        = string
+    os_type              = string
+    key_name             = string
+    tags                 = map(string)
+    network_interfaces   = map(object({
+      ip_address_count = number
+      ip_addresses     = list(string)
+    }))
+    addl_ebs_volumes     = map(object({
+      size             = number
+      type             = string
+      iops             = number
+      snapshot_id      = string
+      kms_key_id       = string
+      device_name      = string
+      cpm_backup       = string
+    }))
+    root_volume_type     = string
+    root_volume_size     = number
+    root_volume_iops     = number
+    iam_instance_profile = string
+    ebs_optimized        = bool
+  }))
+}
+```
+

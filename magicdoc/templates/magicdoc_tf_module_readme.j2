@@ -363,7 +363,7 @@ The following optional module variables are not required because they already ha
 
 <br>
 
-![Optional]({{ tf.config.Variables.Required.Image }})
+![Optional]({{ tf.config.Variables.Optional.Image }})
 {% endif %}
 {# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
 {% if tfvar.general_details.description %}
@@ -471,9 +471,15 @@ module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
     // Optional Variables with module defined default values assigned
     {% if tfvar.type != "map" %}
     {{ tfvar.name }}{{ "="|indent(tf.variables.optional_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
-    {% else %}
+    {% elif tfvar.type == "map" and tfvar.example_value is defined and tfvar.example_value is mapping %}
     {{ tfvar.name }} = {
         {% for key, value in tfvar.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% else %}
+    {{ tfvar.name }} = {
+        {% for key, value in tfvar.default.items() %}
         {{ key }} = "{{ value }}"
         {% endfor %}
     }
