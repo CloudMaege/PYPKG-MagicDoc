@@ -14,40 +14,37 @@ Docs:
     - Allow the Icon for Note types etc to be set by user.
     - Validate that the config file is in the proper format, or autocreate one that is needed. If no config exists then auto create one.
   Completed:
-  - Generate Table of Contents (1/31)
-  - Generate Outputs (1/31)
-  - Generate Output Examples (1/31)
-  - Generate TFVars (1/31)
+  - Generate Table of Contents (1/31) [Done]
+  - Generate Outputs (1/31) [Done]
+  - Generate Output Examples (1/31) [Done]
+  - Generate TFVars (1/31) [Done]
 
 CLI:
-  - Refactor Code into CLI Tool
+  - Refactor Code into CLI Tool - (2-17-20)[Done]
   - Arguments:
-    - ConfigFile
-    - Github Token
+    - ConfigFile - (2-17-20)[Done]
+    - Github Token - (2-17-20)[Done]
   - Commands:
     - Generate Check for Graphviz and make the TF Plan Graph optional.
-    - Generate Documentation
-    - Generate Variable List
-    - Generate TFVars File (pass tfvar file name and automatically add it to the environments directory)
+    - Generate Documentation - (2-17-20)[Done]
+    - Generate Variable List - (2-17-20)[Done]
+    - Generate TFVars File (pass tfvar file name and automatically add it to the environments directory) - (2-17-20)[Done]
     - Generate Usable Example
-    - Generate Project ConfigFile
+    - Generate Project ConfigFile - (2-17-20)[Done]
     - Generate ChangeLog File (Maybe grab directly from Github)
     - Generate .gitignore
     - Generate New Module (Run in empty directory and it will create common file such as variables.tf, main.tf, outputs.tf, etc..)
-    - Generate Outputs (Can we call or easily find and scrape a terraform page with some beautify soup?)
+    - Generate Outputs (Can we call or easily find and scrape a terraform page with some beautify soup?) 
       - Yes, Terraform appears to have a standard https://www.terraform.io/docs/providers/aws/r/s3_bucket.html where the resource would be aws_s3_bucket so just remove aws_ from each of the resources and put in URL path.
     - Generate Github Action for the project.
     - Generate CloudFormation Template to instantiate Secure Bucket, IAM Role, DynamoTable etc..
   - WishList:
     - Securely Store Token (So it doesn't have to be provided on each run)
-    - Allow User to supply their own Jinja Template, Document all collected data and available variables that can be used within the template.
-    - Add Input Argument for TF Directory to run against (tf = Terraform(working_dir='/home/test')
+    - Allow User to supply their own Jinja Template, Document all collected data and available variables that can be used within the template. - (2-17-20)[Done]
+    - Add Input Argument for TF Directory to run against (tf = Terraform(working_dir='/home/test') - (2-17-20)[Done]
 
-Notes:
-  Commands:
-    gen:
-      - config
-    show:
-      - files
-      - variables
-      - outputs
+
+PatchList:
+  - create doc needs a backup flag that will toggle backups off.
+  - create needs template option to allow passing custom template
+  - Need to sync create capabilities with available option flags in the create command.

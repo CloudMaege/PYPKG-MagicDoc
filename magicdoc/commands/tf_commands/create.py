@@ -50,7 +50,7 @@ def create(ctx):
     default='module',
     help='Create a MagicDoc project config file.'
 )
-@click.argument('filename', nargs=1)
+@click.argument('filename', required=False)
 @click.pass_context
 def config(ctx, type, filename):
     """Create a magicdoc project configuration file."""
@@ -60,6 +60,7 @@ def config(ctx, type, filename):
     log_msg = "{}.{}".format(LOG_CONTEXT, this)
 
     # LOCAL_ENV_VARIABLES: Define any local environments that the command function requires.
+    filename = filename if filename is not None and len(filename) > 0 else "magicdoc.yaml"
 
     # CLS: Clear the screen for the command unless in verbose mode.
     log.clear()

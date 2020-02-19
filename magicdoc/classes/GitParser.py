@@ -112,18 +112,17 @@ class GitParser(object):
                                 self._log.debug("{}: Parse of URL string successful. Found: {} -> {}".format(log_msg, local_parse_result.get('namespace'), local_parse_result.get('name')))
                                 local_repo_results.append(local_parse_result)
                 except Exception as e:
-                    self._log.error("{}: File open operation failed!".format(log_msg))
-                    self._log.error("{}: Exception: {}".format(log_msg, str(e)))
+                    self._log.warning("{}: File open operation failed! Exception: {}".format(log_msg, str(e)))
             else:
-                self._log.error("{}: Search could not find the requested directory: {}. Directory path does not exist.".format(log_msg, local_git_config_path))
+                self._log.warning("{}: Search could not find the requested directory: {}. Directory path does not exist.".format(log_msg, local_git_config_path))
                 self._log.warning("{}: Git repository and release data will not be available during this execution cycle.".format(log_msg))
             self._log.debug("{}: Git parse results: {}".format(log_msg, local_repo_results))
             self._config = local_repo_results
             self._log.debug("{}: Git parse results saved successfully!".format(log_msg))
         except Exception as e:
-            self._log.error("{}: Failed to find or parse a git config in the target project directory: {}".format(log_msg, local_git_config_path))
+            self._log.warning("{}: Failed to find or parse a git config in the target project directory: {}".format(log_msg, local_git_config_path))
             self._log.warning("{}: Git repository and release data will not be available during this execution cycle.".format(log_msg))
-            self._log.error("{}: Exception: {}".format(log_msg, str(e)))
+            self._log.warning("{}: Exception: {}".format(log_msg, str(e)))
 
 
     ############################################
@@ -192,8 +191,8 @@ class GitParser(object):
                 self._log.warning("{}: Git config data was unavailable during this execution. Repository URL could not be constructed!".format(log_msg))
                 self._log.warning("{}: Git repository data will not be availabe during this execution. Please enable debug mode for additional information!".format(log_msg))
         except Exception as e:
-            self._log.error("{}: Unable to parse Github response data".format(log_msg))
-            self._log.error("{}: Exception: {}.".format(log_msg, str(e)))
+            self._log.warning("{}: Unable to parse Github response data".format(log_msg))
+            self._log.warning("{}: Exception: {}.".format(log_msg, str(e)))
 
 
     ############################################
@@ -272,12 +271,12 @@ class GitParser(object):
                 self._log.debug("{}: Response processor has completed successfully.".format(log_msg))
                 return github_response
             else:
-                self._log.error("{}: Unable to parse Github repository response object".format(log_msg))
-                self._log.error("{}: GitHub repository data will not be availabe for generating the repo documentation.".format(log_msg))
+                self._log.warning("{}: Unable to parse Github repository response object".format(log_msg))
+                self._log.warning("{}: GitHub repository data will not be availabe for generating the repo documentation.".format(log_msg))
                 return {}
         except Exception as e:
-            self._log.error("{}: Unable to parse Github response data".format(log_msg))
-            self._log.error("{}: Exception: {}.".format(log_msg, str(e)))
+            self._log.warning("{}: Unable to parse Github response data".format(log_msg))
+            self._log.warning("{}: Exception: {}.".format(log_msg, str(e)))
             return {}
 
 
@@ -304,12 +303,12 @@ class GitParser(object):
                 self._log.info(json.dumps(github_response, indent=4, sort_keys=True))
                 return github_response
             else:
-                self._log.error("{}: Unable to parse Github repository response object".format(log_msg))
-                self._log.error("{}: GitHub repository data will not be availabe for generating the repo documentation.".format(log_msg))
+                self._log.warning("{}: Unable to parse Github repository response object".format(log_msg))
+                self._log.warning("{}: GitHub repository data will not be availabe for generating the repo documentation.".format(log_msg))
                 return {}
         except:
-            self._log.error("{}: Unable to parse Github response data".format(log_msg))
-            self._log.error("{}: Exception: {}.".format(log_msg, str(e)))
+            self._log.warning("{}: Unable to parse Github response data".format(log_msg))
+            self._log.warning("{}: Exception: {}.".format(log_msg, str(e)))
             return {}
 
 
@@ -333,15 +332,15 @@ class GitParser(object):
                     self._log.info("{}: API response status: {} passed validation check. Sending success response object back to the instance caller".format(log_msg, r.status_code))
                     self._log.debug(json.dumps(response, indent=4, sort_keys=True))
                 else:
-                    self._log.error("{}: The response object does not appear to be valid json. Sending failure response back to caller...".format(log_msg))
-                    self._log.error(json.dumps(response, indent=4, sort_keys=True))
+                    self._log.warning("{}: The response object does not appear to be valid json. Sending failure response back to caller...".format(log_msg))
+                    self._log.warning(json.dumps(response, indent=4, sort_keys=True))
                     return {}
             else:
-                self._log.error("{}: API response status: {} failed validation check. Sending failure response object back to the instance caller".format(log_msg, r.status_code))
+                self._log.warning("{}: API response status: {} failed validation check. Sending failure response object back to the instance caller".format(log_msg, r.status_code))
                 return {}
         except Exception as e:
-            self._log.error("{}: An error occurred when attempting to send the API request!".format(log_msg))
-            self._log.error("{}: Exception: {}".format(str(e)))
+            self._log.warning("{}: An error occurred when attempting to send the API request!".format(log_msg))
+            self._log.warning("{}: Exception: {}".format(str(e)))
             return {}
         return response
 

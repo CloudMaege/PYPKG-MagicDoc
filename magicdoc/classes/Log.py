@@ -152,4 +152,3 @@ class Log():
         click.echo()
         click.secho("ATTENTION:", fg='red')
         click.secho("{}:{}{}".format("ERROR", " " * this_msg_offset, arg_msg), file=sys.stderr, fg='red')
-        sys.exit()

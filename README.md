@@ -1,6 +1,6 @@
 # MagicDoc Automatated Project Documentation CLI Utility Package
 
-__NOTE: This Library is STILL IN DEV as of this latest push on 02/02/2020.__
+> __NOTE: This Project is currently IN Beta as of this latest push on 02/19/2020.__
 
 <br>
 
@@ -26,880 +26,658 @@ This library has been published to [PyPi](https://pypi.org/project/magicdoc/) an
 pip3 install magicdoc
 ```
 
-<br>
+<br><br>
 
 ## MagicDoc Commands
 
 ```yaml
 magicdoc:
+    Examples:
+        magicdoc --help
+    Arguments: None
+    Options: None
+```
+
+<br><br>
+
+## MagicDoc Provider Sub-Command Groups:
+
+```yaml
+tf:
+    Descripton: the tf subcommand sets the engine provider to terraform, loads the necessary terraform parsing libraries, and instantiates the necessary terraform objects to initialize terraform parsing capabilities.
+    Examples:
+        magicdoc tf
+        magicdoc tf --help
+    Arguments: None
+    Options:
+        verbose:
+            Description: Enables / Disables Verbose logging
+            Value: bool
+            Flag: --verbose, -v
+            Environment Variable: MAGICDOC_TF_VERBOSE
+            Required: No
+            Default: False
+        verbose_level:
+            Description: |
+                    All application processes use standard logging format to include DEBUG, INFO, WARNING, and ERROR. By passing the -l flag the user user can specify the level of verbosity that they wish to see. Passing -l INFO for example will exclude debug logs, yet still allow INFO, WARNING, and ERROR messages to display in the cli console.
+            Value: DEBUG | INFO | WARNING | ERROR
+            Flag: --logging_level, -l
+            Environment Variable: MAGICDOC_TF_VERBOSE_LEVEL
+            Required: No
+            Default: DEBUG
+        directory:
+            Description: |
+                    By default magicdoc will use the current directory path, however if an alternative directory is desired, then the -d flag can be used to specify the desired target directory path for the command execution.
+            Value: Must be valid directory path.
+            Flag: --dir, -d
+            Environment Variable: MAGICDOC_TF_DIRECTORY
+            Required: No
+            Default: Current Working Directory
+        exclude_dir:
+            Description: |
+                    When searching a directory location for terraform files to parse, in the event that a directory exists in the parent target directory, that is not a desired search directory, it can be excluded using the -e flag. If specified, then the file search operation will ignore the specified subdirectory if it exists.
+            Value: Must be valid directory path.
+            Flag: --exclude_dir, -e
+            Environment Variable: MAGICDOC_TF_EXCLUDE_DIR
+            Required: No
+            Default: None
+        config:
+            Description: |
+                    The -c flag allows the user to specify the location of the target project magicdoc configuration file. By default magicdoc will look for the presense of a `magicdoc.yaml` file. Users can name the config file by another filename when creating the config, however the file must be a yaml formatted file, and if an alternative filename is specified then this option must be issued in order for magicdoc to be able to effectively find the config file that will be used to generate the documentation.
+            Value: Must be valid file path.
+            Flag: --config, -c
+            Environment Variable: MAGICDOC_TF_CONFIG
+            Required: No
+            Default: magicdoc.yaml
+        no_recursion:
+            Description: |
+                    The -nr flag is used to tell magicdoc to not search any subdirectories in a target project path. If the -nr flag is set, then only the parent target directory will be searched for terraform files, which will also automatically exclude subdirectories from variables and outputs search.
+            Value: bool
+            Flag: --no_recursion, -nr
+            Environment Variable: MAGICDOC_TF_NO_RECURSION
+            Required: No
+            Default: True (Recursion enabled)
+    Available Sub-Commands:
+        - env
+        - show
+        - create
+```
+
+<br><br>
+
+## MagicDoc TF Show Env
+
+The `magicdoc tf env` command will display information about the tf provider environment. It will display information such as if default template directory was found, what target directory path was specified, if a terraform object could be instantiated, meaning that magicdoc was able to find parsable terraform files in the target directory, and what flags where passed to the command. Its a simple check command for a quick look at how the tf provider environment is constructed when issued against a target project directory.
+
+<br>
+
+```yaml
+env:
+    Examples:
+        magicdoc tf env
+    Arguments: None
+    Options: None
+```
+<br><br>
+
+## MagicDoc TF Show Commands
+
+The `magicdoc tf show` command is a container for show subcommands. By itself this command will not return anything other then the help menu.
+
+```bash
+Usage: magicdoc tf show [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  files      Display the terraform target project file lists.
+  git        Display Terraform Project Git Config Data
+  graph      Display Terraform Project dot Graph Object
+  outputs    Display Terraform Project Outputs
+  release    Display Terraform Project Latest Release
+  repo       Display Terraform Project Git Repository Data
+  tree       Display Terraform Project Directory Tree
+  variables  Display Terraform Project Variables.
+```
+
+<br>
+
+### `magicdoc tf show files`
+
+The `magicdoc tf show files` command will display all of the .tf and .tfvar files in the target project directory that magicdoc was able to find and will use to perform its search and parse operation for Terraform variables and outputs.
+
+<br>
+
+```yaml
+magicdoc tf show files:
   Examples:
-    magicdoc --help
-    magicdoc -p terraform
-    magicdoc -p terraform -d /path/to/module/sourcecode
+    magicdoc tf show files
+    magicdoc tf -d /path/to/module/sourcecode show files
   Arguments: None
-  Options:
-      provider:
-          Description: The type of project or platform provider that is being used as the documentation source
-          Value:
-            - terraform | tf
-            - Other platform providers currently in development
-          Flag: --provider, -p
-          Environment Variable: MAGICDOC_PROVIDER
-          Required: Yes
-      directory:
-          Description: |
-                The target directory containing the project source files that will be used as the documentation objective. This option exists so that the target directory can be set at the global level by an environment variable allowing all future commands to use its value. If this option is not set, then the target directory for the referenced command can take a directory argument directly when calling the command.
-          Value: /path/to/project/files
-          Flag: --directory, -d
-          Environment Variable: MAGICDOC_DIRECTORY
-          Required: No
-  Commands:
-    - show
-```
-
-<br><br>
-
-## MagicDoc Show Commands
-
-The `magicdoc show` command is a container for show subcommands. By itself this command will not return anything other then the help menu.
-
-```bash
-Usage: magicdoc.py show [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  files      Command that will retrieve a list of files from a target...
-  outputs    Command that will retrieve a list of all of the project outputs...
-  release    Command that will retrieve the project repository information...
-  repo       Command that will retrieve the project repository information...
-  variables  Command that will retrieve a list of all of the project...
-```
-
-<br>
-
-### `magicdoc show files`
-
-```yaml
-magicdoc show files:
-  Examples:
-    magicdoc show files
-    magicdoc -p terraform -d /path/to/module/sourcecode show files
-    magicdoc -p terraform show files /path/to/module/sourcecode
-  Arguments:
-      directory:
-          Description: The target directory containing the project source files that will be used as the documentation objective.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
-  Options:
-      subdir:
-          Description: Flag to control recursive searchs through the target directory. If set to True, then the file search will be recursive, if False, then only the parent directory will be searched.
-          Value:
-            - True
-            - False
-          Flag: --directory, -d
-          Environment Variable: MAGICDOC_SHOW_FILES_SUBDIR
-          Default: True
-          Required: No
-```
-
-<br>
-
-```bash
-Using Provider: tf
-Using Directory Path: /Terraform/TF-AWS-CodeBuild-Module
-
-7 tf files found in target directory: /Terraform/TF-AWS-CodeBuild-Module
-outputs.tf
-main.tf
-variables.tf
-/example => env.tfvars
-/example => outputs.tf
-/example => main.tf
-/example => variables.tf
-```
-
-<br><br>
-
-### `magicdoc show variables`
-
-```yaml
-magicdoc show variables:
-  Examples:
-    magicdoc show variables
-    magicdoc -p terraform -d /path/to/module/sourcecode show variables
-    magicdoc -p terraform show variables /path/to/module/sourcecode
-  Arguments:
-      directory:
-          Description: The target directory containing the project source variables that will be used as the documentation objective.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
-  Options:
-      subdir:
-          Description: Flag to control recursive searchs through the target directory. If set to True, then the file search will be recursive, if False, then only the parent directory will be searched.
-          Value:
-            - True
-            - False
-          Flag: --directory, -d
-          Environment Variable: MAGICDOC_SHOW_FILES_SUBDIR
-          Default: True
-          Required: No
-```
-
-<br>
-
-```bash
-Using Provider: tf
-Using Directory Path: /Terraform/TF-AWS-CodeBuild-Module
-
-8 tf required variables found in target project: /Terraform/TF-AWS-CodeBuild-Module
-codebuild_project_name     = Value Required
-codebuild_project_desc     = Value Required
-codebuild_service_role_arn = Value Required
-codebuild_source_type      = Value Required
-codebuild_source_url       = Value Required
-codebuild_vpc              = Value Required
-codebuild_subnet_list      = Value Required
-codebuild_sg_list          = Value Required
-
-
-16 tf optional variables found in target project: /Terraform/TF-AWS-CodeBuild-Module
-codebuild_timeout             = 15
-codebuild_badge               = True
-codebuild_artifact_type       = NO_ARTIFACTS
-codebuild_artifact_encryption = False
-codebuild_encryption_key      = NULL
-codebuild_artifact_bucket     = NULL
-codebuild_artifact_path       = /
-codebuild_source_branch       = master
-codebuild_buildspec           = buildspec.yml
-codebuild_buildspec_type      = FILENAME
-codebuild_env_compute_type    = BUILD_GENERAL1_SMALL
-codebuild_env_image           = aws/codebuild/standard:1.0
-codebuild_env_type            = LINUX_CONTAINER
-codebuild_env_variables       = [
-{
-    "name": "ENV_UPDATE",
-    "value": "false"
-}
-{
-    "name": "ENV_PKGS",
-    "value": ""
-}
-{
-    "name": "SOURCE_DIR_PREFIX",
-    "value": ""
-}
-{
-    "name": "LAMBDA_INDEX",
-    "value": ""
-}
-{
-    "name": "LAMBDA_FN_NAME",
-    "value": ""
-}
-{
-    "name": "LAMBDA_RUNTIME",
-    "value": "python3.8"
-}
-{
-    "name": "LAMBDA_ROLE",
-    "value": ""
-}
-{
-    "name": "LAMBDA_HANDLER_NAME",
-    "value": ""
-}
-{
-    "name": "LAMBDA_TIMEOUT",
-    "value": "180"
-}
-{
-    "name": "LAMBDA_VPC_SUBNETS",
-    "value": ""
-}
-{
-    "name": "LAMBDA_VPC_SGS",
-    "value": ""
-}
-{
-    "name": "LAMBDA_MEM",
-    "value": ""
-}
-]
-webhook_enable                = True
-webhook_trigger               = PUSH
-```
-
-<br><br>
-
-### `magicdoc show outputs`
-
-```yaml
-magicdoc show outputs:
-  Examples:
-    magicdoc show outputs
-    magicdoc -p terraform -d /path/to/module/sourcecode show outputs
-    magicdoc -p terraform show outputs /path/to/module/sourcecode
-  Arguments:
-      directory:
-          Description: The target directory containing the project output files that will be used as the documentation objective.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
-  Options:
-      subdir:
-          Description: Flag to control recursive searchs through the target directory. If set to True, then the file search will be recursive, if False, then only the parent directory will be searched.
-          Value:
-            - True
-            - False
-          Flag: --directory, -d
-          Environment Variable: MAGICDOC_SHOW_FILES_SUBDIR
-          Default: True
-          Required: No
-```
-
-<br>
-
-```bash
-Using Provider: tf
-Using Directory Path: /TF-AWS-CodeBuild-Module
-
-3 tf outputs found in target project: /TF-AWS-CodeBuild-Module
-codebuild_project_id        = aws_codebuild_project.this.id
-codebuild_project_arn       = aws_codebuild_project.this.arn
-codebuild_project_badge_url = aws_codebuild_project.this.badge_url
-```
-
-<br><br>
-
-### `magicdoc show repo`
-
-```yaml
-magicdoc show files:
-  Examples:
-    magicdoc show repo
-    magicdoc -p terraform -d /path/to/module/sourcecode show repo
-    magicdoc -p terraform -d /path/to/module/sourcecode show repo -n rnason -r myRepo
-    magicdoc -p terraform -d /path/to/module/sourcecode show repo -n rnason -r myRepo -t 12345678901....
-    magicdoc -p terraform show repo /path/to/module/sourcecode -n rnason -r myRepo -t 12345678901...
-  Arguments:
-      directory:
-          Description: The target directory containing the project source files that will be used as the documentation objective, this argument can be used to automatically pull the git repo options from .git/config.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
-  Options:
-      namespace:
-          Description: Specify the repository namespace that will be used to search for the git repository.
-          Value: rnason
-          Flag: --namespace, -n
-          Environment Variable: MAGICDOC_SHOW_REPO_NAMESPACE
-          Default: None
-          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
-      repo:
-          Description: Specify the repository to query for the targeted project data.
-          Value: myModule
-          Flag: --repo, -r
-          Environment Variable: MAGICDOC_SHOW_REPO_REPO
-          Default: None
-          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
-      token:
-          Description: Specify a personal access token to use to access a private repository.
-          Value: '1234567890098765432112345678900987654321'
-          Flag: --token, -t
-          Environment Variable: MAGICDOC_SHOW_REPO_TOKEN
-          Default: None
-          Required: No, only necessary if the repository is not public, then it would be required to gain access to the repo data.
-```
-
-<br>
-
-```json
-Using Provider: tf
-Using Directory Path: /TF-AWS-CodeBuild-Lambda-Deployment-Pipeline-Common-Root
-
-{
-    "latest_release": "v1.1.1",
-    "repo_description": "Terraform Root Project Module to deploy CodeBuild Lambda Common Resources",
-    "repo_fullname": "NameSpace-TF/MyRepositoryName",
-    "repo_name": "MyRepositoryName",
-    "repo_owner": "NameSpace-TF",
-    "repo_owner_url": "https://github.com/NameSpace-TF",
-    "state": "pass",
-    "status_code": 200
-}
-```
-
-<br><br>
-
-### `magicdoc show release`
-
-```yaml
-magicdoc show release:
-  Examples:
-    magicdoc show release
-    magicdoc -p terraform -d /path/to/module/sourcecode show release
-    magicdoc -p terraform -d /path/to/module/sourcecode show release -n rnason -r myRepo
-    magicdoc -p terraform -d /path/to/module/sourcecode show release -n rnason -r myRepo -t 12345678901....
-    magicdoc -p terraform show release /path/to/module/sourcecode -n rnason -r myRepo -t 12345678901...
-  Arguments:
-      directory:
-          Description: The target directory containing the project source files that will be used as the documentation objective, this argument can be used to automatically pull the git repo options from .git/config.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
-  Options:
-      namespace:
-          Description: Specify the repository namespace that will be used to search for the git repository.
-          Value: rnason
-          Flag: --namespace, -n
-          Environment Variable: MAGICDOC_SHOW_REPO_NAMESPACE
-          Default: None
-          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
-      repo:
-          Description: Specify the repository to query for the targeted project data.
-          Value: myModule
-          Flag: --repo, -r
-          Environment Variable: MAGICDOC_SHOW_REPO_REPO
-          Default: None
-          Required: Yes, unless it is desired to allow the command to attempt to configure this value from the .git/config file.
-      token:
-          Description: Specify a personal access token to use to access a private repository.
-          Value: '1234567890098765432112345678900987654321'
-          Flag: --token, -t
-          Environment Variable: MAGICDOC_SHOW_REPO_TOKEN
-          Default: None
-          Required: No, only necessary if the repository is not public, then it would be required to gain access to the repo data.
-```
-
-<br>
-
-```json
-Using Provider: tf
-Using Directory Path: /TF-AWS-CodeBuild-Lambda-Deployment-Pipeline-Common-Root
-
-Latest Release: v1.1.1
-```
-
-<br><br>
-
-## MagicDoc Gen Commands
-
-The `magicdoc gen` command is a container for show subcommands. By itself this command will not return anything other then the help menu.
-
-```bash
-Usage: magicdoc.py show [OPTIONS] COMMAND [ARGS]...
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  files
-```
-
-<br>
-
-### `magicdoc gen dirtree`
-
-```yaml
-magicdoc gen dirtree:
-  Examples:
-    magicdoc gen dirtree
-    magicdoc -p terraform -d /path/to/module/sourcecode gen dirtree
-    magicdoc -p terraform gen dirtree /path/to/module/sourcecode
-  Arguments:
-      directory:
-          Description: The target directory containing the project source files that will be used as the documentation objective.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
   Options: None
 ```
 
 <br>
 
 ```bash
-Using Provider: tf
-Using Directory Path: /TF-AWS-CodeBuild-Module
+MagicDoc Terraform Project File Summary:
+========================================
 
-.
-├── outputs.tf
-├── main.tf
-├── CHANGELOG.md
-├── images
-│   ├── tf_s3.png
-│   ├── optional.png
-│   ├── neon_optional.png
-│   ├── required.png
-│   └── neon_required.png
-├── example
-│   ├── env.tfvars
-│   ├── outputs.tf
-│   ├── main.tf
-│   ├── README.md
-│   └── variables.tf
-├── README.md
-├── variables.tf
-└── templates
-    ├── LambdaPy_BuildSpec.yml
-    └── LambdaJar_BuildSpec.yml
+MagicDoc [tf show files] Command Environment:
+Gathering Terraform Project Files...
+
+Terraform file search target directory location: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+  -> 6 terraform file(s) found in target directory.
+  -> 1 tfvar file(s) found in target directory.
+
+Terraform .tf files:
+====================
+outputs.tf
+main.tf
+variables.tf
+example/outputs.tf
+example/main.tf
+example/variables.tf
+
+Terraform .tfvar files:
+=======================
+example/env.tfvars
 ```
 
 <br><br>
 
-### `magicdoc gen config`
+### `magicdoc tf show variables`
+
+The `magicdoc tf show variables` command will display an output of all terraform variables that were found in the `variables.tf` file within the target project directory. Magicdoc will use the variables that it was able to parse from any found variable.tf files when constructing both the config file as well as the readme documentation.
+
+<br>
 
 ```yaml
-magicdoc gen config:
+magicdoc show variables:
   Examples:
-    magicdoc gen config
-    magicdoc -p terraform -d /path/to/module/sourcecode gen config
-    magicdoc -p terraform gen config /path/to/module/sourcecode
-  Arguments:
-      directory:
-          Description: The destination directory where the config file will be written to upon rendering.
-          Value: /path/to/project/files
-          Default: ./
-          Required: No, If no directory is specified then magicdoc will use the current working directory.
+    magicdoc tf show variables
+    magicdoc tf -d /path/to/module/sourcecode show variables
+  Arguments: None
   Options:
-      template_dir:
-          Description: Specify the directory path location of the directory that contains the desired config jinja template. Default settting will use the packaged template.
-          Value: /path/to/templates/directory
-          Flag: --template_dir, -td
-          Environment Variable: MAGICDOC_GEN_CONFIG_TEMPLATE_DIR
-          Default: None (Class assign's default value of the internal package template directory.)
+      include_examples:
+          Description: Instructs the variables execution environment to include and parse files in any `example` or `examples` subdirectories located in the parent target project directory. By default directories named `example`, or `examples` are excluded from the file/variable/output search results, and are not parsed or included.
+          Value: bool
+          Flag: --include_examples, -1
+          Environment Variable: MAGICDOC_TF_SHOW_VARIABLES_INCLUDE_EXAMPLES
           Required: No
-      template:
-          Description: Specify the jinja template file that will be used to generate the project config. Default value is the packaged magicdoc config template.
-          Value: /path/to/templates/template
-          Flag: --template, -t
-          Environment Variable: MAGICDOC_GEN_CONFIG_TEMPLATE
-          Default: magicdoc_config.j2
-          Required: No
-      filename:
-          Description: Specify the name that will be used for the config file output. Default is README.yaml.
-          Value: magicdoc.yaml (Must be saved as YAML for future processing and usage)
-          Flag: --filename, -f
-          Environment Variable: MAGICDOC_GEN_CONFIG_FILENAME
-          Default: README.yaml
-          Required: No
-      overwrite:
-          Description: Flag to allow over writing the current configuration file if one already exists in the provided config output path.
-          Value:
-            - True
-            - False
-          Flag: --overwrite, -ow
-          Environment Variable: MAGICDOC_GEN_CONFIG_OVERWRITE
           Default: False
-          Required: No
 ```
 
 <br>
 
 ```bash
-#############################
-# Repository Configuration: #
-#############################
-Repository:
-    OwnerOverride:
-    NameSpace:
-    Name:
-    Version:
+  Environment: Verbose Attribute Set:                False
+  Log: Verbose Attribute Set:                        False
+  Environment: Verbose Level Attribute Set:          debug
 
-############################
-# README.md Configuration: #
-############################
-README:
-    Title: 
-    HeroImage:
-    DocLink:
-    #=====================#
-    # README.md Sections: #
-    #=====================#
-    GettingStarted: >-
-        Project Description.....
-    PreRequisites: >-
-        This module does not currently have any pre-requisites or dependency requirements.
-    Usage:
-        ExampleResourceName:
-############################
-# Variables Configuration: #
-############################
-Variables:
-    #=====================#
-    # Required Variables: #
-    #=====================#
-    Required:
-        Image:
-        codebuild_project_name:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the Name that will be given to the CodeBuild project that will be deployed.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_project_desc:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify a description for the CodeBuild project that will be deployed.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_service_role_arn:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the ARN of the role that will be assumed by the CodeBuild service to execute the build job.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_source_type:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the source repository type or vendor that this CodeBuild job will use. Valid Values are CODECOMMIT, CODEPIPELINE, GITHUB, GITHUB_ENTERPRISE, BITBUCKET, S3 or NO_SOURCE
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_source_url:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the source repository URL that CodeBuild will clone from. This is the repository of the project that will be build by this CodeBuild job.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_vpc:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the Id of the VPC that CodeBuild will be launched into. Example: vpc-xxxxxxxx
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_subnet_list:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the subnets that CodeBuild will be placed on within the specified VPC
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_sg_list:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the Security Groups that will be applied to the CodeBuild job within the specified VPC
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-    #=====================#
-    # Optional Variables: #
-    #=====================#
-    Optional:
-        Image:
-        codebuild_timeout:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the max amount of time in minutes that the CodeBuild job can run. Value must between 5 Min and 480 Min or 8 hours. Default value 15 min
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_badge:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify if CodeBuild should construct a build state badge for the project. Default True
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_artifact_type:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify type of artifact that the provisioned CodeBuild job will produce. Valid values are CODEPIPELINE, S3, or NO_ARTIFACTS. Default set NO_ARTIFACTS
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_artifact_encryption:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify if any CodeBuild artifacts should be encrypted. This option only applies to artifacts that will be pushed to S3. Default False
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_encryption_key:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the ARN of the KMS CMK that will be used to encrypt object pushed to the supplied S3 bucket. This option only applies if codebuild_artifact_encryption is true
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_artifact_bucket:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the Name of the S3 bucket that will be used for built artifact storage.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_artifact_path:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the path in the destination artifact bucket where produced artifacts will be pushed. Default set to /
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_source_branch:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the GIT repository branch that the codebuild job will monitor and pull from.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_buildspec:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the local path or repo file name of the buildspec file that will used during build execution. Available pre-built buildspecs are 'LambdaPy' and LambdaJar
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_buildspec_type:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify if the provided buildspec file value references a pre-built file template or simply a file name. Valid values are 'FILE', 'FILENAME' and 'PREBUILT'
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_env_compute_type:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the CodeBuild environment Compute Type to be provisioned. Valid Values are BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM and BUILD_GENERAL1_LARGE.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_env_image:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the image that CodeBuild will use for the build environment. Default set to Ubuntu aws/codebuild/standard:1.0
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_env_type:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify the CodeBuild environment type. Valid Values are 'LINUX_CONTAINER' and 'WINDOWS_CONTAINER'. Default set to LINUX_CONTAINER
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        codebuild_env_variables:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify a map of environment variables that will be passed to and used by the CodeBuild job.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        webhook_enable:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify if a webhook should be created and added to the CodeBuild job to build on commit.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
-        webhook_trigger:
-            ExampleValue:
-            GeneralDetails:
-                Description: >-
-                    Specify a comma separated string of event types that will trigger the execution of this job. Valid values are PUSH, PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED, PULL_REQUEST_REOPENED, PULL_REQUEST_MERGED.
-                Note:
-                Image:
-            VarDetails:
-                Description:
-                Note:
-                Image:
-            UsageDetails:
-                Description:
-                Note:
-                Image:
+MagicDoc Terraform Project Variable Summary:
+============================================
+  Include Example Directories:                       False
+
+MagicDoc [tf show variables] Command Environment:
+Gathering Terraform Project Files...
+
+Parsing variables.tf files for Terraform variables...
+Scanning project directory for defined module variables...
+Terraform variable search target directory location: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+ -> 8 required terraform project variables found in target project: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+ -> 13 optional terraform project variables found in target project: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+
+Terraform Project Required Variables:
+=====================================
+codebuild_project_name     = 'Required Value'
+codebuild_project_desc     = 'Required Value'
+codebuild_service_role_arn = 'Required Value'
+codebuild_source_type      = 'Required Value'
+codebuild_source_url       = 'Required Value'
+codebuild_vpc              = 'Required Value'
+codebuild_subnet_list      = [
+    'Required_Value_1'
+    'Required_Value_2'
+]
+codebuild_sg_list          = [
+    'Required_Value_1'
+    'Required_Value_2'
+]
+
+Terraform Project Optional Variables:
+=====================================
+codebuild_timeout             = 15
+codebuild_badge               = 'True'
+codebuild_artifact_type       = 'NO_ARTIFACTS'
+codebuild_artifact_encryption = 'False'
+codebuild_encryption_key      = 'NULL'
+codebuild_artifact_bucket     = 'NULL'
+codebuild_artifact_path       = '/'
+codebuild_source_branch       = 'master'
+codebuild_buildspec           = 'buildspec.yml'
+codebuild_buildspec_type      = 'FILENAME'
+codebuild_env_compute_type    = 'BUILD_GENERAL1_SMALL'
+codebuild_env_image           = 'aws/codebuild/standard:1.0'
+codebuild_env_type            = 'LINUX_CONTAINER'
+```
+
+<br><br>
+
+### `magicdoc tf show outputs`
+
+The `magicdoc tf show outputs` command will display an output of all terraform outputs that were found in the `outputs.tf` file within the target project directory. Magicdoc will use the outputs that it was able to parse from any found outputs.tf files when constructing the readme documentation.
+
+<br>
+
+```yaml
+magicdoc tf show outputs:
+  Examples:
+    magicdoc tf show outputs
+    magicdoc tf -d /path/to/module/sourcecode show outputs
+  Arguments: None
+  Options:
+      include_examples:
+          Description: Instructs the variables execution environment to include and parse files in any `example` or `examples` subdirectories located in the parent target project directory. By default directories named `example`, or `examples` are excluded from the file/variable/output search results, and are not parsed or included.
+          Value: bool
+          Flag: --include_examples, -i
+          Environment Variable: MAGICDOC_TF_SHOW_VARIABLES_INCLUDE_EXAMPLES
+          Required: No
+          Default: False
+```
+
+<br>
+
+```bash
+  Environment: Verbose Attribute Set:                False
+  Log: Verbose Attribute Set:                        False
+  Environment: Verbose Level Attribute Set:          debug
+
+MagicDoc Terraform Project Outputs Summary:
+===========================================
+  Include Example Directories:                       False
+
+MagicDoc [tf show outputs] Command Environment:
+Gathering Terraform Project Variables...
+
+Parsing outputs.tf files for Terraform outputs...
+Scanning project directory for defined module outputs...
+Terraform output search target directory location: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+ -> 3 terraform project outputs found in target project: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+
+codebuild_project_id        = {
+    aws_codebuild_project.this.id
+}
+
+codebuild_project_arn       = {
+    aws_codebuild_project.this.arn
+}
+
+codebuild_project_badge_url = {
+    aws_codebuild_project.this.badge_url
+}
+```
+
+<br><br>
+
+### `magicdoc tf show graph`
+
+The `magicdoc tf show graph` command will tell magicdoc to initialize the terraform project directory by issuing a `terraform init` on the directory. It will then run a `terraform graph` command and store the dot formatted graph data, and display it to the screen. Magicdoc will use this data to automatically construct, and render the terraform graph in PNG format if the `dot` binary file can be found within the executing systems path. If magicdoc is successful in rendering the dot graph into a PNG file, the file will be placed into a images directory in the target project path, and then included in the readme documentation when renderend.
+
+<br>
+
+```yaml
+magicdoc tf show graph:
+  Examples:
+    magicdoc tf show graph
+    magicdoc tf -d /path/to/module/sourcecode show graph
+  Arguments: None
+  Options:
+      overwrite:
+          Description: Instructs magicdoc to overwrite any existing .terraform directory if one is already found in the target project directory. If magicdoc does not find a .terraform directory, it will perform the `terraform init` run the graph dot file generation, and then remove the .terraform directory that it created in generating the graph data.
+          Value: bool
+          Flag: --overwrite, -o
+          Environment Variable: MAGICDOC_TF_SHOW_GRAPH_OVERWRITE
+          Required: No
+          Default: False
+```
+
+<br>
+
+```bash
+MagicDoc Terraform Project Graph dot Structure:
+===============================================
+  Overwrite Existing .terraform Directory:           False
+
+MagicDoc [tf show graph] Command Environment:
+Generating Terraform Project Graph...
+
+Generating terraform graph dot object...
+CLS->TFMagicDoc.terraform_init: Executing `terraform init` on target project directory: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+
+Initializing the backend...
+
+Initializing provider plugins...
+- Checking for available provider plugins...
+- Downloading plugin for provider "aws" (hashicorp/aws) 2.49.0...
+
+The following providers do not have any version constraints in configuration,
+so the latest version was installed.
+
+To prevent automatic upgrades to new major versions that may contain breaking
+changes, it is recommended to add version = "..." constraints to the
+corresponding provider blocks in configuration, with the constraint strings
+suggested below.
+
+* provider.aws: version = "~> 2.49"
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+CLS->TFMagicDoc.terraform_init: Execution of `terraform init` completed successfully against the target directory: /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+digraph {
+        compound = "true"
+        newrank = "true"
+        subgraph "root" {
+                "[root] aws_codebuild_project.this" [label = "aws_codebuild_project.this", shape = "box"]
+                "[root] aws_codebuild_webhook.this" [label = "aws_codebuild_webhook.this", shape = "box"]
+                "[root] local.buildspec_file" [label = "local.buildspec_file", shape = "note"]
+                "[root] local.codebuild_compute_env" [label = "local.codebuild_compute_env", shape = "note"]
+                "[root] local.prebuilt_buildspec" [label = "local.prebuilt_buildspec", shape = "note"]
+                "[root] output.codebuild_project_arn" [label = "output.codebuild_project_arn", shape = "note"]
+                "[root] output.codebuild_project_badge_url" [label = "output.codebuild_project_badge_url", shape = "note"]
+                "[root] output.codebuild_project_id" [label = "output.codebuild_project_id", shape = "note"]
+                ...etc
+        }
+}
+```
+
+<br><br>
+
+### `magicdoc tf show git`
+
+The `magicdoc tf show git` command will display the git repository information that it was able to parse from the existing `.git/config` directory if one is present in the target project directory. Magicdoc will use the information that its able to parse from the .git/config file to form the requests to github to query for latest release data prior to document generation.
+
+<br>
+
+```yaml
+magicdoc tf show git:
+  Examples:
+    magicdoc tf show git
+    magicdoc tf -d /path/to/module/sourcecode show git
+  Arguments: None
+  Options:
+      auth:
+          Description: Passed a git repository personal access token to magicdoc, and is used to construct the appropriate header auth request when requesting data from the configured git repository.
+          Value: token
+          Flag: --auth, -a
+          Environment Variable: MAGICDOC_TF_SHOW_REPO_AUTH
+          Required: No
+          Default: None
+```
+
+<br>
+
+```bash
+MagicDoc Terraform Project Git Config:
+======================================
+
+MagicDoc [tf show git] Command Environment:
+Parsing Terraform Project Git Config...
+
+Attempting to parse target project git config...
+{
+    url       = 'git@github.com:CloudMage-TF/TF-AWS-Test-Module.git'
+    namespace = 'CloudMage-TF'
+    name      = 'TF-AWS-Test-Module.git'
+    provider  = 'github.com'
+}
+```
+
+<br><br>
+
+### `magicdoc tf show repo`
+
+The `magicdoc tf show repo` command will display the git repository information that it was able to get from performing an API request to the repository found in the .git/config directory. The API collects just relevant information that was determined to be useful in aiding to provide data to the readme document that will be constructed. If the repository is a private repository an auth token can be passed using the -a flag.
+
+<br>
+
+```yaml
+magicdoc tf show repo:
+  Examples:
+    magicdoc tf show repo
+    magicdoc tf show repo -a "0123456789109876543210"
+    magicdoc tf -d /path/to/module/sourcecode show repo
+  Arguments: None
+  Options:
+      auth:
+          Description: Passed a git repository personal access token to magicdoc, and is used to construct the appropriate header auth request when requesting data from the configured git repository.
+          Value: token
+          Flag: --auth, -a
+          Environment Variable: MAGICDOC_TF_SHOW_REPO_AUTH
+          Required: No
+          Default: None
+```
+
+<br>
+
+```bash
+MagicDoc Terraform Project Latest Release:
+==========================================
+  Git Authentication Token Provided:                 True
+
+
+MagicDoc [tf show release] Command Environment:
+Sending Terraform Project Git Release Request...
+
+
+Project Latest Release:
+=======================
+  TF-AWS-ResourceNaming-Module Latest Release:            v1.0.5
+```
+
+<br><br>
+
+### `magicdoc tf show tree`
+
+The `magicdoc tf show tree` command will construct and display an ascii style directory tree listing for the target project directory. During the data gathering stage, magicdoc will construct this tree view of the target project directory and include the output into the readme documentation.
+
+<br>
+
+```yaml
+magicdoc tf show tree:
+  Examples:
+    magicdoc tf show tree
+    magicdoc tf -d /path/to/module/sourcecode show tree
+  Arguments: None
+  Options: None
+```
+
+<br>
+
+```bash
+  Environment: Verbose Attribute Set:                False
+  Log: Verbose Attribute Set:                        False
+  Environment: Verbose Level Attribute Set:          debug
+  Log: Verbose Level Attribute Set:                  debug
+  Environment: Template Path Set:                    /Volumes/MacData/Work/CloudMage/PythonLibs/PyPkgs-MagicDoc/magicdoc/templates
+  Environment: Directory Recursion Set:              False
+
+Scanning project directory for terraform .tf and .tfvar files...
+Usage: main.py tf create [OPTIONS] COMMAND [ARGS]...
+
+  Create a Magicdoc config or Documentation for your project.
+
+
+MagicDoc Terraform Project Directory Tree Structure:
+====================================================
+
+MagicDoc [tf show tree] Command Environment:
+Gathering Terraform Project Outputs...
+
+.
+├── outputs.tf
+├── .DS_Store
+├── Makefile
+├── README.md
+├── .gitignore
+├── variables.tf
+└── magicdoc.yaml
+```
+
+<br><br>
+
+## MagicDoc TF Create Commands
+
+The `magicdoc tf create` command is a container for create subcommands. By itself this command will not return anything other then the help menu.
+
+<br>
+
+```bash
+Usage: magicdoc.py create [OPTIONS] COMMAND [ARGS]...
+
+  Environment: Verbose Attribute Set:                False
+  Log: Verbose Attribute Set:                        False
+  Environment: Verbose Level Attribute Set:          debug
+  Log: Verbose Level Attribute Set:                  debug
+  Environment: Template Path Set:                    /Volumes/MacData/Work/CloudMage/PythonLibs/PyPkgs-MagicDoc/magicdoc/templates
+  Environment: Directory Recursion Set:              False
+
+Scanning project directory for terraform .tf and .tfvar files...
+Usage: main.py tf create [OPTIONS] COMMAND [ARGS]...
+
+  Create a Magicdoc config or Documentation for your project.
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  config  Create a magicdoc project configuration file.
+  doc     Create a terraform module or project README.md file.
+```
+
+<br>
+
+### `magicdoc tf create config`
+
+Command to generate a magicdoc config file for the target terraform project. The config file allows a user to supply additional information that will be rendered into the generated readme document. The command takes 1 option, being the type, identifying the type of project/the template used to render the document. The valid available option choices are `module` and `root`, although currently only module will work as a root template is still currently in development. If no option is selected, then magicdoc will default to module. The `create config` command also takes a single optional argument that will allow the command issuer the ability to name the config file something other then magicdoc.yaml. If a custom config name is specified then subsequent commands to generate or regenerate the document will require that the `magicdoc tf -c /path/to/confg` option is set. The file must be a yaml file extention, and this is forced, meaning that even if a custom file name is provided without a yaml extention, magicdoc will remove the extention and append .yaml to the custom config name.
+
+<br>
+
+```yaml
+magicdoc tf create config -t <type> <filename>:
+  Examples:
+    magicdoc tf create config
+    magicdoc tf create config - module
+    magicdoc tf create config -t module project.yaml
+    magicdoc tf -d /path/to/module/sourcecode create config
+    magicdoc tf -d /path/to/module/sourcecode create config -t module
+    magicdoc tf -d /path/to/module/sourcecode create config -t module config.yaml
+  Arguments:
+      filename:
+          Description: The custom name that will be given to the config file that is produced and written to the target project directory.
+          Value: Any string value that will be set as the project config file name.
+          Required: No, If filename is specified, then magicdoc will use the provided filename to name the output config file.
+          Default: magicdoc.yaml
+  Options:
+      type:
+          Description: The type of project that magicdoc will parse and build documentation for. When using the terraform provider, `module` and `root` are the only valid options.
+          Note: Magicdoc currently only supports module documentation generation. A root template is currently in development.
+          Value: module, root
+          Flag: --type, -t
+          Environment Variable: MAGICDOC_TF_CREATE_CONFIG_TYPE
+          Required: No
+          Default: Module
+```
+
+<br>
+
+```bash
+MagicDoc Terraform Documentation Creator:
+=========================================
+  Config Output File:                                /Volumes/MacData/Work/Terraform/Modules/Documentation/TF-TestModule/magicdoc.yaml
+
+MagicDoc Terraform Module Config Generator: [tf create config -t module <output_file>]:
+Attempting to Gather Terraform Project Data...
+
+Scanning project directory for defined module variables...
+
+Generating Terraform Module Magicdoc Config: magicdoc.yaml
+
+Magicdoc Terraform Module config file: magicdoc.yaml has been successfully created in :/Volumes/MacData/Work/Terraform/Modules/Documentation/TF-TestModule!
+```
+
+<br><br>
+
+### `magicdoc tf create doc`
+
+The `magicdoc tf create doc` command is the magic behind magicdoc. When this command is issued, magicdoc will run a data collection on all of the project outputs, variables, files, graph, git repository and release data, build the tree, and create the readme document. If a `README.md` file already exists in the target project directory then magicdoc will automatically backup this file, timestamp it, rename it as README_<date>_<timestamp>.bak and generate the new README file as `README.md` in the target project directory.
+
+<br>
+
+```yaml
+magicdoc tf create doc <-t type>:
+  Examples:
+    magicdoc tf create doc
+    magicdoc tf create doc --help
+    magicdoc tf create doc -t module
+    magicdoc tf -d /path/to/module/sourcecode create doc -t module
+    magicdoc tf -d /path/to/module/sourcecode create doc -t module -a "0123456789109876543210"
+  Arguments: None
+  Options:
+      type:
+          Description: The type of project that magicdoc will parse and build documentation for. When using the terraform provider, `module` and `root` are the only valid options.
+          Note: Magicdoc currently only supports module documentation generation. A root template is currently in development.
+          Value: module, root
+          Flag: --type, -t
+          Environment Variable: MAGICDOC_TF_CREATE_CONFIG_TYPE
+          Required: No
+          Default: Module
+      auth:
+          Description: Passed a git repository personal access token to magicdoc, and is used to construct the appropriate header auth request when requesting data from the configured git repository.
+          Value: token
+          Flag: --auth, -a
+          Environment Variable: MAGICDOC_TF_SHOW_REPO_AUTH
+          Required: No
+          Default: None
+```
+
+<br>
+
+```bash
+MagicDoc Terraform Documentation Creator:
+=========================================
+  Output File:                                       README.md
+
+MagicDoc Terraform Module Doc Generator: [tf create doc -t module]:
+Attempting to Gather Terraform Project Data...
+
+MagicDoc git config file not found in /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+No git information about the target project can be provided at this time.
+Scanning project directory for defined module variables...
+Scanning project directory for defined module outputs...
+
+MagicDoc Terraform Documentation Creator:
+=========================================
+  Output File:                                       README.md
+
+MagicDoc Terraform Module Doc Generator: [tf create doc -t module]:
+Attempting to Gather Terraform Project Data...
+
+MagicDoc git config file not found in /Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module
+No git information about the target project can be provided at this time.
+Scanning project directory for defined module variables...
+Scanning project directory for defined module outputs...
+
+Generating Terraform Module Readme Documentation...
+Magicdoc Terraform Module documentation file: README.md has been successfully created in :/Volumes/MacData/Work/CloudMage/Terraform/TF-AWS-CodeBuild-Module!
 ```
 
 <br><br>
