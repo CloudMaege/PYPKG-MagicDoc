@@ -1,0 +1,698 @@
+
+
+{# START OF README TPL #}
+<!-- VSCode Markdown Exclusions-->
+<!-- markdownlint-disable MD025 Single Title Headers-->
+{# TITLE #}
+# {{ tf.config.ReadMe.Title|default("Terraform Module Documentation", true) }}
+
+{# OPTIONAL HERO IMAGE #}
+{% if tf.config.ReadMe.HeroImage %}
+<br>
+
+![Hero]({{ tf.config.ReadMe.HeroImage }})
+
+<br>
+{% else %}
+<br>
+{% endif %}
+
+{# VERSION BADGE #}
+![Version-Badge](https://img.shields.io/badge/MODULE%20VERSION-{{ git.release|default('v0.0.0', true) }}-Green?style=for-the-badge&logo=terraform&logoColor=BLUE&logoWidth=25)
+
+<br><br>
+
+# Table of Contents
+
+* [Getting Started](#getting-started)
+* [Module Pre-Requisites and Dependencies](#module-pre-requisites-and-dependencies)
+* [Module Directory Structure](#module-directory-structure)
+* [Module Usage](#module-usage)
+* [Terraform Variable Usage](#terraform-variables-usage)
+  * [Inline Variable Declaration](#inline-variable-declaration)
+  * [TFVar Variable Declaration](#tfvar-variable-declaration)
+* [Required Module Variables](#required-variables)
+{% for tfvar in tf.variables.required_vars %}
+  * ![required_variable](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/16/required-codeblock-drop.png) &nbsp; [*{{ tfvar.name }}*]('')
+{% endfor %}
+* [Optional Module Variables](#optional-module-variables)
+{% for tfvar in tf.variables.optional_vars %}
+  * ![required_variable](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/16/optional-codeblock-drop.png) &nbsp; [*{{ tfvar.name }}*]('')
+{% endfor %}
+* [Module Example Usage](#module-example-usage)
+* [Variables and TFVar Reference File Templates](#variables-and-tfvar-reference-file-templates)
+* [Module Outputs Reference File Templates](#module-outputs-reference-file-templates)
+* [Terraform Requirements](#terraform-requirements)
+* [Recommended Terraform Utilities](#recommended-terraform-utilities)
+* [Contacts and Contributions](#contacts-and-contributions)
+
+<br><br>
+
+{# GETTING STARTED #}
+# Getting Started
+
+{% if tf.config.ReadMe.GettingStarted is defined %}
+{{ tf.config.ReadMe.GettingStarted }}
+{% else %}
+{{ git.repo.description|default("No description has been defined for this project.", true) }}
+{% endif %}
+
+<br><br>
+
+{# PRE-REQS #}
+# Module Pre-Requisites and Dependencies
+
+{{ tf.config.ReadMe.PreRequisites|default("This module does not currently have any pre-requisites or dependency requirements.", true) }}
+
+<br><br>
+
+{# DIRECTORY STRUCTURE TREE #}
+# Module Directory Structure
+
+```bash
+{{ tree }}
+```
+
+<br><br>
+{# Module Diagram #}
+{% if tf.tfdiagram is defined %}
+
+# Module Diagram
+
+<br>
+
+![Module Diagram]({{ tf.tfdiagram }})
+
+<br><br>
+{% endif %}
+
+{# MODULE EXAMPLE #}
+# Module Usage
+
+```terraform
+module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
+    source = "git@github.com:{{ git.repo.full_name|default("example_namespace/example_repo", true) }}?ref={{ git.release }}"
+
+    // Required Variables
+    {% for tfvar in tf.variables.required_vars %}
+    {% if "map" not in tfvar.type %}
+    {{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
+    {% endif %}
+    {% endfor %}
+
+    {% for tfvar in tf.variables.required_vars %}
+    {% if "map" in tfvar.type %}
+    {{ tfvar.name }} = {
+        {% for key, value in tfvar.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+
+    // Optional Variables with module defined default values assigned
+    {% for tfvar in tf.variables.optional_vars %}
+    {% if tfvar.type != "map" %}
+    # {{ tfvar.name }}{{ "="|indent(tf.variables.optional_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.default) if tfvar.type == "string" else tfvar.default }}
+    {% endif %}
+    {% endfor %}
+
+    {% for tfvar in tf.variables.optional_vars %}
+    {% if tfvar.type == "map" %}
+    # {{ tfvar.name }} = {
+        {% for key, value in tfvar.default.items() %}
+    #   {{ key }} = "{{ value }}"
+        {% endfor %}
+    # }
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# TERRAFORM VAR EXAMPLE #}
+# Terraform Variable Usage
+
+Module variables that need to either be defined or re-defined with a non-default value can easily be hardcoded inline directly within the module call block or from within the root project that is consuming the module. If using the second approach then the root project must have it's own custom variables defined within the projects `variables.tf` file with set default values or with the values provided from a separate environmental `terraform.tfvar` file. Examples of both approaches can be found below. Note that for the standards used within this documentation, all variables will mostly use the first approach for ease of readability.
+
+<br><br>
+
+> ![Tip](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/24/info.png) &nbsp;[__Tip:__](Tip) <br> There is also a third way to provide variable values using Terraform data sources. A data source is a unique type of code block used within a project that either instantiates or collects data that can be referenced throughout the project. A data source, for example,  can be declared to read the terraform state file and gather all of the available information from a previously deployed project stack. Any of the data contained within the data source can then be referenced to set the value of a project or module variable.
+
+<br><br>
+
+{# INLINE VAR DECLARATION #}
+## Inline Variable Declaration
+
+```terraform
+module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
+    source = "git@github.com:{{ git.repo.full_name|default("example_namespace/example_repo", true) }}?ref={{ git.release }}"
+
+    // Required Variables
+    {% for tfvar in tf.variables.required_vars %}
+    {% if tfvar.type != "map" %}
+    {{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# FILE VAR DECLARATION #}
+## TFVar Variable Declaration
+
+<br>
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; [variables.tf](variables.tf)
+
+```terraform
+{% for tfvar in tf.variables.required_vars %}
+{% if tfvar.type != "map" %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+}
+{% endif %}
+{% endfor %}
+```
+
+<br>
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; [terraform.tfvars](terraform.tfvars)
+
+```terraform
+{% for tfvar in tf.variables.required_vars %}
+{% if tfvar.type != "map" %}
+{{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
+{% endif %}
+{% endfor %}
+```
+
+<br>
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; [main.tf](main.tf)
+
+```terraform
+module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
+    source = "git@github.com:{{ git.repo.full_name|default("example_namespace/example_repo", true) }}?ref={{ git.release }}"
+
+    // Required Variables
+    {% for tfvar in tf.variables.required_vars %}
+    {% if tfvar.type != "map" %}
+    {{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} tf.{{ tfvar.name }}
+    {% endif %}
+    {% endfor %}
+}
+```
+
+<br><br>
+
+{# REQUIRED VARIABLES #}
+# Required Variables
+
+The following required module variables do not contain default values and must be set by the consumer of the module to use the module successfully.
+
+<br>
+
+{% for tfvar in tf.variables.required_vars %}
+## ![Required_Variable](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/48/required-shieldblock.png) &nbsp; [{{ tfvar.name }}](tfvar.name)
+{# Variable Image if Provided #}
+{% if tf.config.Variables.Required.Image %}
+
+<br>
+
+![Required]({{ tf.config.Variables.Required.Image }})
+{% endif %}
+{# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
+{% if tfvar.general_details.description %}
+
+<br>
+
+{{ tfvar.general_details.description }}
+{% else %}
+
+<br>
+
+{{ tfvar.description }}
+{% endif %}
+{% if tfvar.general_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.general_details.notes }}
+{% endif %}
+{% if tfvar.general_details.images %}
+
+<br><br>
+
+![{{ tfvar.name }}]({{ tfvar.general_details.images }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END GENERALDETAILS SECTION #}
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Declaration of [{{ tfvar.name }}]({{ tfvar.name }}) within the modules variables.tf file
+
+```terraform
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+}
+```
+{# BEGIN VARDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.variable_details.description %}
+
+<br>
+
+{{ tfvar.variable_details.description }}
+{% endif %}
+{% if tfvar.variable_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.variable_details.notes }}
+{% endif %}
+{% if tfvar.variable_details.images %}
+
+<br><br>
+
+![Declaring {{ tfvar.name }}]({{ tfvar.variable_details.images }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END VARDETAILS SECTION #}
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Setting the [{{ tfvar.name }}]({{ tfvar.name }}) module variable within a projects root main.tf file
+
+```terraform
+module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
+    source = "git@github.com:{{ git.repo.full_name|default("example_namespace/example_repo", true) }}?ref={{ git.release }}"
+
+    // Declaring the "{{ tfvar.name }}" variable
+    {% if tfvar.type != "map" %}
+    {{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
+    {% else %}
+    {{ tfvar.name }} = {
+        {% for key, value in tfvar.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+
+    // Other Required Variables
+    {% for required_var in tf.variables.required_vars %}
+    {% if required_var.name != tfvar.name and tfvar.type != "map" %}
+    {{ required_var.name }}{{ "="|indent(tf.variables.required_vars_maxlength - required_var.name|length + 1, true) }} {{ "\"%s\""|format(required_var.example_value) if required_var.type == "string" else required_var.example_value }}
+    {% elif required_var.name != tfvar.name %}
+    {{ required_var.name }} = {
+        {% for key, value in required_var.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+}
+```
+{# BEGIN USAGEDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.usage_details.description %}
+
+<br>
+
+{{ tfvar.usage_details.description }}
+{% endif %}
+{% if tfvar.usage_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.usage_details.notes }}
+{% endif %}
+{% if tfvar.usage_details.images %}
+
+<br><br>
+
+![{{ tfvar.name }} Usage Example]({{ tfvar.usage_details.images }})
+
+<br><br><br>
+
+{% else %}
+
+<br><br><br>
+
+{% endif %}
+{% endfor %}
+{# END USAGEDETAILS SECTION #}
+{# OPTIONAL VARIABLES -#}
+# Optional Module Variables
+
+The following optional module variables are not required because they already have default values assigned when the variables where defined within the modules `variables.tf` file. If the default values do not need to be changed by the root project consuming the module, then they do not even need to be included in the root project. If any of the variables do need to be changed, then they can be added to the root project in the same way that the required variables were defined and utilized. Optional variables also may alter how the module provisions resources in the cases of encryption or IAM policy generation. A variable could flag an encryption requirement when provisioning an S3 bucket or Dynamo table by providing a KMS CMK, for example. Another use case may be the passage of ARN values to allow users or roles access to services or resources, whereas by default permissions would be more restrictive or only assigned to the account root or a single IAM role. A detailed explanation of each of these optional variables can be found below:
+
+<br>
+
+{% for tfvar in tf.variables.optional_vars %}
+## ![Optional_Variable](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/48/optional-shieldblock.png) &nbsp; [{{ tfvar.name }}](tfvar.name)
+{# Variable Image if Provided #}
+{% if tf.config.Variables.Required.Image %}
+
+<br>
+
+![Optional]({{ tf.config.Variables.Required.Image }})
+{% endif %}
+{# BEGIN GENERALDETAILS SECTION  (Optional Note/Image Only, Description is provided by Config or Variables.tf file parse) #}
+{% if tfvar.general_details.description %}
+
+<br>
+
+{{ tfvar.general_details.description }}
+{% else %}
+
+<br>
+
+{{ tfvar.description }}
+{% endif %}
+{% if tfvar.general_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.general_details.notes }}
+{% endif %}
+{% if tfvar.general_details.images %}
+
+<br><br>
+
+![{{ tfvar.name }}]({{ tfvar.general_details.images }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END GENERALDETAILS SECTION #}
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Declaration of [{{ tfvar.name }}]({{ tfvar.name }}) within the modules variables.tf file
+
+```terraform
+{% if tfvar.type != "map" %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+    default     = {{ "\"%s\""|format(tfvar.default) if tfvar.type == "string" else tfvar.default }}
+}
+
+{% else %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+    default     = {
+        {% for key, value in tfvar.default.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+}
+{% endif %}
+
+```
+{# BEGIN VARDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.variable_details.description %}
+
+<br>
+
+{{ tfvar.variable_details.description }}
+{% endif %}
+{% if tfvar.variable_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.variable_details.notes }}
+{% endif %}
+{% if tfvar.variable_details.images %}
+
+<br><br>
+
+![Declaring {{ tfvar.name }}]({{ tfvar.variable_details.images }})
+
+<br><br>
+{% else %}
+
+<br><br>
+{% endif %}
+{# END VARDETAILS SECTION #}
+
+### ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Setting the [{{ tfvar.name }}]({{ tfvar.name }}) module variable within a projects root main.tf file
+
+```terraform
+module "{{ tf.config.ReadMe.Module|default("example", true) }}" {
+    source = "git@github.com:{{ git.repo.full_name|default("example_namespace/example_repo", true) }}?ref={{ git.release }}"
+
+    // Required Variables
+    {% for variable in tf.variables.required_vars %}
+    {% if variable.type != "map" %}
+    {{ variable.name }}{{ "="|indent(tf.variables.required_vars_maxlength - variable.name|length + 1, true) }} {{ "\"%s\""|format(variable.example_value) if variable.type == "string" else variable.example_value }}
+    {% endif %}
+    {% endfor %}
+
+    {% for variable in tf.variables.required_vars %}
+    {% if variable.type == "map" %}
+    {{ variable.name }} = {
+        {% for key, value in variable.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+    {% endfor %}
+
+    // Optional Variables with module defined default values assigned
+    {% if tfvar.type != "map" %}
+    {{ tfvar.name }}{{ "="|indent(tf.variables.optional_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.example_value) if tfvar.type == "string" else tfvar.example_value }}
+    {% else %}
+    {{ tfvar.name }} = {
+        {% for key, value in tfvar.example_value.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+    {% endif %}
+}
+```
+{# BEGIN USAGEDETAILS SECTION  (Optional Description/Note/Image) #}
+{% if tfvar.usage_details.description %}
+
+<br>
+
+{{ tfvar.usage_details.description }}
+{% endif %}
+{% if tfvar.usage_details.notes %}
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> {{ tfvar.usage_details.notes }}
+{% endif %}
+{% if tfvar.usage_details.images %}
+
+<br><br>
+
+![{{ tfvar.name }} Usage Example]({{ tfvar.usage_details.images }})
+
+<br><br><br>
+
+{% else %}
+
+<br><br><br>
+
+{% endif %}
+{% endfor %}
+{# END USAGEDETAILS SECTION #}
+{# MODULE EXAMPLE FILES MENTION #}
+# Module Example Usage
+
+An example of how to use this module can be found within the `example` directory of this repository.
+
+<br><br>
+
+# Variables and TFVar Reference File Templates
+
+The following code blocks can be used or appended to an existing `variables.tf` file or `terraform.tfvars` file respectively within the project root consuming this module. Optional Variables are commented out and have their values set to the default values defined in the module's variables.tf/terraform.tfvars respective file. If the values of any optional variables do not need to be changed, then they do not need to be redefined or included in the project root. If they do need to be changed, then add them to the root project and change the values according to the project requirements.
+
+<br><br>
+
+## ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Module [variables.tf](variables.tf) Reference File
+
+```terraform
+###########################################################################
+# Required {{ git.repo.name|default("example_namespace/example_repo", true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables require consumer defined values to be provided. #
+###########################################################################
+{% for tfvar in tf.variables.required_vars %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+}
+
+{% endfor %}
+
+###########################################################################
+# Optional {{ git.repo.name|default("example_namespace/example_repo", true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables have default values already set by the module.  #
+# They will not need to be included in a project root module variables.tf #
+# file unless a non-default value needs be assigned to the variable.      #
+###########################################################################
+{% for tfvar in tf.variables.optional_vars %}
+{% if tfvar.type != "map" %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+    default     = {{ "\"%s\""|format(tfvar.default) if tfvar.type == "string" else tfvar.default }}
+}
+{% endif %}
+
+{%- endfor %}
+
+{% for tfvar in tf.variables.optional_vars %}
+{% if tfvar.type == "map" %}
+variable "{{ tfvar.name }}" {
+    type        = {{ tfvar.type }}
+    description = "{{ tfvar.description }}"
+    default     = {
+        {% for key, value in tfvar.default.items() %}
+        {{ key }} = "{{ value }}"
+        {% endfor %}
+    }
+}
+{% endif %}
+
+{%- endfor %}
+```
+
+<br><br>
+
+## ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Module [TFVars](TFVars) Reference File
+
+```terraform
+###########################################################################
+# Required {{ git.repo.name|default("example_namespace/example_repo", true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables require consumer defined values to be provided. #
+###########################################################################
+{% for tfvar in tf.variables.required_vars %}
+{% if tfvar.type != "map" %}
+{{ tfvar.name }}{{ "="|indent(tf.variables.required_vars_maxlength - tfvar.name|length + 1, true) }} "Value Required"
+{% endif %}
+{% endfor %}
+
+{% for tfvar in tf.variables.required_vars %}
+{% if tfvar.type == "map" %}
+{{ tfvar.name }} = {
+    "Key Required" = "Value Required"
+    "Key Required" = "Value Required"
+}
+{% endif %}
+{% endfor %}
+
+###########################################################################
+# Optional {{ git.repo.name|default("example_namespace/example_repo", true) }} Module Vars:
+#-------------------------------------------------------------------------#
+# The following variables have default values already set by the module.  #
+# They will not need to be included in a project root module variables.tf #
+# file unless a non-default value needs be assigned to the variable.      #
+###########################################################################
+{% for tfvar in tf.variables.optional_vars %}
+{% if tfvar.type != "map" %}
+# {{ tfvar.name }}{{ "="|indent(tf.variables.optional_vars_maxlength - tfvar.name|length + 1, true) }} {{ "\"%s\""|format(tfvar.default) if tfvar.type == "string" else tfvar.default }}
+{% endif %}
+{% endfor %}
+
+{% for tfvar in tf.variables.optional_vars %}
+{% if tfvar.type == "map" %}
+# {{ tfvar.name }} = {
+    {% for key, value in tfvar.default.items() %}
+#   {{ key }} = "{{ value }}"
+    {% endfor %}
+}
+{% endif %}
+
+{%- endfor %}
+```
+
+<br><br>
+
+# Module Outputs Reference File Templates
+
+The template will finally create the following outputs that can be pulled and used in subsequent terraform runs via data sources. The outputs will be written to the Terraform state file. When using and calling the module within a root project, the output values of the module are available to the project root by simply referencing the module outputs from the root project `outputs.tf` file.
+
+<br><br>
+
+## ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Module [outputs.tf](outputs.tf) Reference File
+
+```terraform
+##############################################
+# {{ git.repo.name|default("example_namespace/example_repo", true) }} Available Module Outputs:
+##############################################
+{% for output in tf.outputs %}
+output "{{ output.name }}" {
+    {{ output.value }}
+}
+{% endfor %}
+```
+
+<br><br>
+
+## ![Folder](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/opened_folder.png) &nbsp; Module Output Usage Reference File
+
+```terraform
+##############################################
+# {{ git.repo.name|default("example_namespace/example_repo", true) }} Module Output Usage:
+##############################################
+{% for output in tf.outputs %}
+output "{{ output.name }}" {
+    value = module.{{ tf.config.ReadMe.Module|default("example", true) }}.{{ output.name }}
+}
+{% endfor %}
+```
+
+<br><br>
+
+> ![Note](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/note.png) &nbsp; [__Note:__](Note) <br> When referencing the module outputs be sure that the output value contains the identifier given to the module call. As an example, if the module was defined as `module "{{ tf.config.ReadMe.Module|default("example", true) }}" {}` then the output reference would be constructed as `module.{{ tf.config.ReadMe.Module|default("example", true) }}.{{ tf.outputs[0].name|default("arn", true) }}`.
+
+<br><br>
+
+# Terraform Requirements
+
+* [Terraform](https://www.terraform.io/)
+* [GIT](https://git-scm.com/download/win)
+* [AWS-Account](https://aws.amazon.com/)
+
+<br><br>
+
+# Recommended Terraform Utilities
+
+* [Terraform for VSCode](https://github.com/mauve/vscode-terraform)
+* [Terraform Config Inspect](https://github.com/hashicorp/terraform-config-inspect)
+
+<br><br>
+
+# Contacts and Contributions
+{% if git.repo %}
+
+This project is owned and maintained by [{{git.repo.owner}}]({{ git.repo.owner_url }})
+
+<br>
+{% endif %}
+
+To contribute, please:
+
+* Fork the project
+* Create a local branch
+* Submit Changes
+* Create A Pull Request
+
+<br><br>
+
+![CloudMage](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/32/logo.png) This document was created with ![CloudMage](https://cloudmage-images-public.s3.us-east-2.amazonaws.com/icons/cloudmage/16/heart.png) by the open source [MagicDoc](https://pypi.org/project/magicdoc/) project!

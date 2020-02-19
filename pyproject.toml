@@ -1,35 +1,59 @@
 [tool.poetry]
 name = "MagicDoc"
-version = "0.0.3"
+version = "0.1.1"
 description = "MagicDoc is a Python command line tool/library that is designed to provide an extremely simple way to automatically create detailed documentation for certain project types."
-license = "GPL-3.0-or-later"
 authors = ["Rich Nason <rnason@cloudmage.io>"]
+maintainers = ["Rich Nason <rnason@cloudmage.io>"]
+license = "GNU GPL3"
 readme = "README.md"
 include = [
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
 ]
 homepage = "https://github.com/TheCloudMage/PyPkgs-MagicDoc"
+repository = "https://github.com/TheCloudMage/PyPkgs-MagicDoc"
+documentation = "https://github.com/TheCloudMage/PyPkgs-MagicDoc"
+
+keywords = [
+    "Packages",
+    "CloudMage",
+    "Documentation",
+    "Readme"
+]
+
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+packages = [
+    {include = "magicdoc"}
+]
+
+[tool.poetry.urls]
+"Releases" = "https://github.com/TheCloudMage/PyPkgs-MagicDoc/releases"
+"Bug Tracking" = "https://github.com/TheCloudMage/PyPkgs-MagicDoc/issues"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-jinja2 = "^2.11.1"
-termcolor = "^1.1.0"
 PyYaml = "^5.3"
 requests = "^2.22.0"
 python-terraform = "^0.10.1"
 pyhcl = "^0.4.0"
 graphviz = "^0.13.2"
 click = "^7.0"
+colorama = "^0.4.3"
+cloudmage-jinjautils = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^4.6"
+coverage = "^5.0.3"
+pylint = "^2.4.4"
 
 [tool.poetry.scripts]
-magicdoc = 'magicdoc:main'
-
-[tool.poetry.urls]
-"Releases" = "https://github.com/TheCloudMage/PyPkgs-MagicDoc/releases"
-"Bug Tracking" = "https://github.com/TheCloudMage/PyPkgs-MagicDoc/issues"
+magicdoc = 'magicdoc.main:cli'
 
 [build-system]
 requires = ["poetry>=0.12"]
